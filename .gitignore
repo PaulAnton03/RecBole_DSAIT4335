@@ -13,3 +13,78 @@ saved/
 docs/build/
 wandb/*
 /ray_log*
+
+# =============================================================================
+# DSAIT4335 group additions (everything above is from the lecturer's repo)
+# =============================================================================
+
+# --- Python / environments ---------------------------------------------------
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.coverage
+htmlcov/
+build/
+dist/
+
+# --- Secrets / machine-specific ----------------------------------------------
+.env
+.env.*
+*.pem
+*.key
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+*.code-workspace
+
+# --- RecBole / experiment byproducts (reproducible; do not commit) -------------
+# (saved/, *.pth, *.log, log_tensorboard, wandb/, /ray_log* are covered above)
+log/
+ray_results/
+*.pt
+*.ckpt
+*.result
+significant_test.txt
+*.zip
+*.tar.gz
+
+# Raw experiment output (splits, top-k recommendation dumps, per-run dumps).
+# Keep the folder, ignore its contents. results/processed/ IS tracked: keep it small.
+results/raw/*
+!results/raw/.gitkeep
+
+# --- LaTeX build artifacts (report/) -------------------------------------------
+report/build/
+report/*.pdf
+*.aux
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.synctex
+*.out
+*.toc
+*.lof
+*.lot
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+*.nav
+*.snm
+*.vrb
+*.xdv
+
+# --- Generated report assets: DELIBERATELY TRACKED ------------------------------
+# Overleaf receives these through Git, so they must NOT be ignored:
+#     figures/generated/          (figures written by Python, e.g. *.pdf)
+#     report/tables/generated/    (LaTeX tables written by Python, *.tex)
+# Do not add broad patterns (e.g. *.pdf, *.png, *.tex) above without checking
+# `git check-ignore -v figures/generated/x.pdf report/tables/generated/x.tex`.

@@ -1,0 +1,50 @@
+\section{Task 2 --- Evaluation of Effectiveness}
+\label{sec:task2}
+
+\subsection{Evaluation metrics (Task 2.1)}
+\TODO{Definitions of the accuracy and beyond-accuracy metrics as implemented in \texttt{project/metrics}.}
+
+\subsection{Comparison with baselines (Task 2.2)}
+\TODO{Compare the best-performing models against the Random and Popularity baselines and discuss.}
+
+% The table below is filled from report/tables/generated/model_results.tex once an experiment
+% has produced it and it has been committed. Until then a red placeholder box is shown.
+\begin{table}[htbp]
+  \centering
+  \caption{Accuracy and beyond-accuracy results per model.}
+  \label{tab:model-results}
+  \generatedtable{model_results}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \generatedfigure[width=0.9\linewidth]{model_comparison}
+  \caption{Model comparison.}
+  \label{fig:model-comparison}
+\end{figure}
+
+\subsection{Hybrid coefficient analysis (Task 2.3)}
+\TODO{How much does each individual recommender contribute to the hybrid's final prediction?}
+
+\begin{figure}[htbp]
+  \centering
+  \generatedfigure[width=0.9\linewidth]{hybrid_coefficients}
+  \caption{Learned hybrid coefficients.}
+  \label{fig:hybrid-coefficients}
+\end{figure}
+
+\subsection{Further analyses of the hybrid and its components (Task 2.4)}
+\TODO{Which additional analyses explain the behaviour of the hybrid and of its individual models?}
+
+\subsection{Performance across user and item groups (Task 2.5)}
+\TODO{For which user and item groups is each model more successful, in accuracy and beyond accuracy?}
+
+\begin{figure}[htbp]
+  \centering
+  \generatedfigure[width=0.9\linewidth]{user_group_analysis}
+  \caption{Performance per user group.}
+  \label{fig:user-group-analysis}
+\end{figure}
+
+\subsection{Insights (Task 2.6)}
+\TODO{What do these analyses suggest for novel or better hybrid models?}

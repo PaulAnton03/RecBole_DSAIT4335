@@ -1,0 +1,102 @@
+% DSAIT4335 Recommender Systems -- Final Project report
+%
+% Overleaf: set  Menu -> Main document -> report/main.tex
+% Local:    cd report && latexmk -pdf -outdir=build main.tex
+%
+% Paths below are relative to this file (report/). Python writes:
+%   ../figures/generated/*.pdf        -> \generatedfigure{name}
+%   tables/generated/*.tex            -> \generatedtable{name}
+% Both are committed to Git, so pushing to `main` and pulling in Overleaf updates the report.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage[hidelinks]{hyperref}
+
+% ---------------------------------------------------------------------------
+% Title-page data -- fill in
+% ---------------------------------------------------------------------------
+\newcommand{\coursecode}{DSAIT4335}
+\newcommand{\coursename}{Recommender Systems}
+\newcommand{\projecttitle}{\TODO{project title}}
+\newcommand{\groupnumber}{\TODO{group number}}
+
+% ---------------------------------------------------------------------------
+% Helpers
+% ---------------------------------------------------------------------------
+\newcommand{\TODO}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
+
+% Placeholder box, shown instead of a generated asset that has not been committed yet.
+\newcommand{\missingasset}[1]{%
+  \fbox{\parbox{0.85\linewidth}{\centering\color{red}%
+    \textbf{TODO:} generated asset not found\\ \texttt{#1}}}}
+
+% Figures written by Python to <repo>/figures/generated/<name>.pdf
+% Usage: \generatedfigure[width=0.9\linewidth]{model_comparison}
+\graphicspath{{../figures/generated/}{figures/}}
+\newcommand{\generatedfigure}[2][width=\linewidth]{%
+  \IfFileExists{../figures/generated/#2.pdf}%
+    {\includegraphics[#1]{../figures/generated/#2.pdf}}%
+    {\IfFileExists{figures/generated/#2.pdf}%
+      {\includegraphics[#1]{figures/generated/#2.pdf}}%
+      {\missingasset{figures/generated/\detokenize{#2}.pdf}}}}
+
+% Tables written by Python to <repo>/report/tables/generated/<name>.tex (booktabs tabular)
+% Usage: \generatedtable{model_results}
+\newcommand{\generatedtable}[1]{%
+  \IfFileExists{tables/generated/#1.tex}%
+    {\input{tables/generated/#1.tex}}%
+    {\IfFileExists{report/tables/generated/#1.tex}%
+      {\input{report/tables/generated/#1.tex}}%
+      {\missingasset{report/tables/generated/\detokenize{#1}.tex}}}}
+
+\begin{document}
+
+% ---------------------------------------------------------------------------
+% First page (roman numeral, so that hyperref does not see two pages numbered 1)
+% ---------------------------------------------------------------------------
+\pagenumbering{roman}
+\begin{titlepage}
+  \centering
+  \vspace*{3cm}
+  {\large \coursecode\ \coursename\par}
+  \vspace{1.5cm}
+  {\Huge\bfseries \projecttitle\par}
+  \vspace{1.5cm}
+  {\Large Group \groupnumber\par}
+  \vspace{1.5cm}
+  {\large\bfseries Group members\par}
+  \vspace{0.5em}
+  % Add or remove rows as needed.
+  \begin{tabular}{ll}
+    \TODO{name} & \TODO{student number}\\
+    \TODO{name} & \TODO{student number}\\
+    \TODO{name} & \TODO{student number}\\
+    \TODO{name} & \TODO{student number}\\
+  \end{tabular}
+  \vfill
+  {\large Delft University of Technology}
+\end{titlepage}
+\pagenumbering{arabic}
+
+% ---------------------------------------------------------------------------
+% Main body
+% ---------------------------------------------------------------------------
+\input{sections/task1}
+\input{sections/task2}
+\input{sections/task3}
+
+% ---------------------------------------------------------------------------
+% Appendix
+% ---------------------------------------------------------------------------
+\appendix
+\input{sections/appendix}
+
+\end{document}

@@ -1,0 +1,20 @@
+# Extra requirements for the DSAIT4335 group project (NOT from the lecturer).
+#
+# Install jointly with the lecturer's files so pip resolves everything together:
+#   pip install -e . -r requirements.txt -r project/requirements.txt
+#
+# --- Constraints needed to make the lecturer's RecBole 1.2.1 run (see PROJECT.md) ---
+# requirements.txt lists plain "ray", but `from ray import tune` (imported by
+# recbole.quick_start) also needs pyarrow, which comes with the "tune" extra.
+ray[tune]>=2.31.0
+# recbole/config/configurator.py uses `np.float_`, which NumPy 2.0 removed.
+# (The lecturer's numpy>=1.17.2 still holds.)
+numpy<2
+# recbole/data/dataset/dataset.py fills NaNs with `feat[field].fillna(..., inplace=True)`
+# on a column slice; under pandas 3 (Copy-on-Write) that is a silent no-op.
+# (The lecturer's pandas>=1.3.0 still holds.)
+pandas<3
+
+# --- Group code ---
+# figures written to figures/generated/*.pdf (see project/utils/report_assets.py)
+matplotlib
