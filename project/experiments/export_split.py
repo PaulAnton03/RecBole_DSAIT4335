@@ -23,8 +23,8 @@ import pandas as pd
 
 from project.models.pipeline import build_config, prepare_data
 from project.models.registry import MODELS, ALL_MODELS
-from project.utils.data_formats import SPLIT_COLUMNS, SPLIT_PARTS, save_split, split_path
-from project.utils.paths import RESULTS_PROCESSED_DIR
+from project.utils.data_formats import DATASET_NAME, SPLIT_COLUMNS, SPLIT_PARTS, save_split, split_path
+from project.utils.paths import DATASET_DIR, RESULTS_PROCESSED_DIR
 
 MANIFEST = RESULTS_PROCESSED_DIR / "split_manifest.json"
 
@@ -32,15 +32,23 @@ MANIFEST = RESULTS_PROCESSED_DIR / "split_manifest.json"
 def split_frames(model_name: str = "Pop") -> dict:
     config = build_config(MODELS[model_name], "quick")
     dataset, train_data, valid_data, test_data = prepare_data(config)
+    # RecBole min-max normalises float fields in memory (rating 1..5 -> 0..1, timestamp -> 0), so the
+    # original rating and timestamp are taken from the raw dataset file instead.
+    raw = pd.read_csv(DATASET_DIR / DATASET_NAME / f"{DATASET_NAME}.inter", sep="\t",
+                      dtype={"user_id:token": str, "item_id:token": str})
+    raw.columns = [c.split(":")[0] for c in raw.columns]
+    raw = raw.drop_duplicates(["user_id", "item_id"])
     frames = {}
     for part, loader in zip(SPLIT_PARTS, (train_data, valid_data, test_data)):
-        inter = loader.dataset.inter_feat if part == "train" else loader.dataset.inter_feat
+        inter = loader.dataset.inter_feat
         df = pd.DataFrame({
             "user_id": dataset.id2token(dataset.uid_field, inter[dataset.uid_field].numpy()).astype(str),
             "item_id": dataset.id2token(dataset.iid_field, inter[dataset.iid_field].numpy()).astype(str),
-            "rating": inter["rating"].numpy(),
-            "timestamp": inter["timestamp"].numpy().astype("int64"),
         })
+        df = df.merge(raw[SPLIT_COLUMNS], on=["user_id", "item_id"], how="left", validate="one_to_one")
+        assert df["rating"].notna().all(), "every split interaction must exist in the raw .inter file"
+        df["rating"] = df["rating"].astype(int)
+        df["timestamp"] = df["timestamp"].astype("int64")
         frames[part] = df[SPLIT_COLUMNS]
     return frames
 
