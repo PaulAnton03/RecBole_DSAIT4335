@@ -18,3 +18,8 @@ pandas<3
 # --- Group code ---
 # figures written to figures/generated/*.pdf (see project/utils/report_assets.py)
 matplotlib
+# hyperopt (RecBole's run_hyper / HyperTuning) imports pkg_resources, which Python 3.12+ venvs and
+# setuptools >= 81 no longer ship -> pin an older setuptools.
+setuptools<81
+# unit tests under project/tests
+pytest

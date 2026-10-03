@@ -1,0 +1,28 @@
+# ─── Shared settings for EVERY model run by the group (Track A: models) ──────────
+# Loaded AFTER the lecturer's recbole/config/<Model>/ml-100k.yaml, so these keys
+# override it. Everything that defines the evaluation protocol lives here, so all
+# models, hybrids and re-rankers are compared on exactly the same split and target.
+#
+# Decided on day 1 (see RecSys-Project-Plan-and-Team-Split, "Agree on day 1"):
+#   * one frozen split, seed 2020, RS 80/10/10 per user, random order, full ranking
+#   * final list of 10, candidate list of 50 (exported by project/models/pipeline.py)
+#   * NDCG@10 on the validation set is the tuning / model-selection target
+#   * relevance = every held-out interaction (RecBole default; no rating threshold)
+
+seed: 2020
+reproducibility: True
+
+eval_args:
+  split:
+    RS: [0.8, 0.1, 0.1]
+  group_by: user
+  order: RO
+  mode: full
+metrics: [Recall, MRR, NDCG, Hit, Precision, MAP]
+topk: [10]
+valid_metric: NDCG@10
+valid_metric_bigger: True
+eval_batch_size: 4096
+
+# quieter runs; the per-epoch log still goes to log/
+show_progress: False

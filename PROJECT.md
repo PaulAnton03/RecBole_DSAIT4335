@@ -28,20 +28,22 @@ updates never conflicts with our documentation. **This file is the group guide.*
 .
 ├── recbole/ run_*.py save_*.py score_from_saved.py dataset/ …   # lecturer's course RecBole
 ├── project/                       # OUR code (run from the repo root: python -m project.<...>)
-│   ├── configs/                   #   our RecBole/experiment YAML configs
+│   ├── configs/                   #   our RecBole/experiment YAML configs (base.yaml = shared protocol, hyper/, models/)
+│   ├── models/                    #   Track A: individual models -- train, tune, export (see project/models/README.md)
 │   ├── hybrids/                   #   Task 1: hybrid recommenders
 │   ├── metrics/                   #   Task 2: accuracy + beyond-accuracy metrics
 │   ├── rerankers/                 #   Task 3: diversity / calibration / fairness rerankers
 │   ├── analysis/                  #   coefficient, user-group, item-group analyses
 │   ├── experiments/               #   runnable entry points: python -m project.experiments.<name>
-│   ├── utils/                     #   paths.py, report_assets.py (figure/table writers)
+│   ├── utils/                     #   paths.py, report_assets.py (figure/table writers), data_formats.py (shared file formats)
+│   ├── tests/                     #   unit tests: python -m pytest project/tests -q
 │   └── requirements.txt           #   extra requirements on top of the lecturer's
 ├── results/
 │   ├── raw/                       # big/reproducible run output   -> git-IGNORED (folder kept)
 │   └── processed/                 # small aggregated CSV/JSON     -> tracked
 ├── figures/generated/             # figures written by Python     -> tracked, consumed by LaTeX
 └── report/                        # LaTeX report (Overleaf)
-    ├── main.tex  sections/{task1,task2,task3,appendix}.tex
+    ├── report.tex                 #   the hand-in report (Times New Roman 12 pt, 1.15 spacing; one page per task)
     ├── figures/                   #   hand-made figures (diagrams, screenshots)
     └── tables/generated/          #   LaTeX tables written by Python -> tracked, consumed by LaTeX
 ```
@@ -102,6 +104,20 @@ python run_recbole.py --model=BPR --dataset=ml-100k --config_files=recbole/confi
 - Our own experiments live in `project/experiments/` and are started from the repo root:
   `python -m project.experiments.<name>`. Our configs go in `project/configs/`.
 
+### The shared pipeline (Track A) -- start here
+
+The individual models are trained, tuned and exported by Track A; every other track reads its output files
+(frozen split, score matrices, top-50 lists) instead of calling RecBole. Full description, formats and runtimes:
+[`project/models/README.md`](project/models/README.md).
+
+```bash
+python -m project.experiments.export_split                      # 0. frozen split  (results/raw/splits/)
+python -m project.experiments.run_models --mode quick --models all   # 1. untuned scores + top-50 lists
+python -m project.experiments.tune_models                       # 2. grid search on validation NDCG@10
+python -m project.experiments.run_models --mode tuned           # 3. final (tuned) scores + lists
+python -m project.experiments.results_table                     # 4. report table + figure
+```
+
 ### Evaluating separately (assignment: "perform the evaluation separately")
 
 The lecturer's scripts dump the split and the top-k lists so metrics can be computed outside RecBole:
@@ -147,15 +163,17 @@ save_latex_table(df, "model_results")    # -> report/tables/generated/model_resu
 ```
 
 Agreed file names (the report already references them): `model_comparison`, `hybrid_coefficients`,
-`user_group_analysis` (figures) and `model_results`, `reranker_results` (tables). Add new ones with a fixed,
+`user_group_analysis` (figures) and `model_results`, `tuning_summary`, `reranker_results` (tables). Add new ones with a fixed,
 descriptive `snake_case` name — never put a date, run id or seed in the name; overwrite in place. Commit a generated
 file together with the code change that produced it. Generated tables contain only the `tabular`; the caption and
-label live in `report/sections/*.tex`.
+label live in `report/report.tex`.
 
 ## 6. The report and Overleaf
 
-`report/main.tex` (title page, Tasks 1–3, appendix) includes `report/sections/{task1,task2,task3,appendix}.tex`.
-Generated assets are included with two macros defined in `main.tex`:
+`report/report.tex` is the hand-in report (title page, Tasks 1–3, appendix in one file; formatted as the brief
+requires: Times New Roman, 12 pt, line spacing 1.15, at most one page and 200 words of discussion per task).
+Each member writes the subsections of the sub-tasks they own; the owner is named in a comment above each one.
+Generated assets are included with two macros defined in `report.tex`:
 
 ```latex
 \generatedfigure[width=0.9\linewidth]{model_comparison}   % ../figures/generated/model_comparison.pdf
@@ -165,11 +183,11 @@ Generated assets are included with two macros defined in `main.tex`:
 If a generated file has not been committed yet, a red *TODO* box is shown instead, so the report always compiles.
 Fill in every `\TODO{...}`; the skeleton contains **no** results.
 
-Local build (needs a TeX distribution with `latexmk`): `cd report && latexmk -pdf -outdir=build main.tex`
+Local build: `cd report && tectonic report.tex` (or `latexmk -pdf -outdir=build report.tex` with a TeX distribution)
 (`report/build/` and `report/*.pdf` are git-ignored).
 
 **Connecting Overleaf (once, by one member; needs an Overleaf plan with GitHub sync):** Overleaf → *New Project* →
-*Import from GitHub* → select `PaulAnton03/RecBole_DSAIT4335`; then *Menu → Main document → `report/main.tex`*.
+*Import from GitHub* → select `PaulAnton03/RecBole_DSAIT4335`; then *Menu → Main document → `report/report.tex`*.
 Overleaf imports the whole repository (~25 MB), so the RecBole code also shows up in its file tree; ignore it.
 
 **How data flows** (Overleaf's GitHub sync is *manual* in both directions):

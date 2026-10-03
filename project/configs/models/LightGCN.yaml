@@ -1,0 +1,6 @@
+# Tuned hyper-parameters for LightGCN -- written by project.experiments.tune_models, do not edit by hand.
+# Search space: project/configs/hyper/LightGCN.hyper (12 configurations, exhaustive grid).
+# Selection: best validation NDCG@10 = 0.2432. All trials: results/processed/tuning/LightGCN.csv
+learning_rate: 0.005
+n_layers: 3
+reg_weight: 0.0001

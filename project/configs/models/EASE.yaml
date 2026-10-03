@@ -1,0 +1,4 @@
+# Tuned hyper-parameters for EASE -- written by project.experiments.tune_models, do not edit by hand.
+# Search space: project/configs/hyper/EASE.hyper (7 configurations, exhaustive grid).
+# Selection: best validation NDCG@10 = 0.2568. All trials: results/processed/tuning/EASE.csv
+reg_weight: 500.0

@@ -1,0 +1,5 @@
+# Tuned hyper-parameters for BPR -- written by project.experiments.tune_models, do not edit by hand.
+# Search space: project/configs/hyper/BPR.hyper (9 configurations, exhaustive grid).
+# Selection: best validation NDCG@10 = 0.2411. All trials: results/processed/tuning/BPR.csv
+embedding_size: 128
+learning_rate: 0.001

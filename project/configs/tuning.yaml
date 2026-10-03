@@ -1,0 +1,9 @@
+# ─── Training schedule used while tuning and for the final (tuned) runs ──────────
+# The lecturer's configs train for a fixed 20 epochs and validate every 10. For the
+# search we let every neural model train up to 100 epochs, validate after each epoch
+# and stop after 10 epochs without improvement of the validation NDCG@10; the best
+# epoch's checkpoint is what gets evaluated and exported.
+# Traditional models (Pop, ItemKNN, EASE, SLIM, ...) ignore these: they fit in one pass.
+epochs: 100
+eval_step: 1
+stopping_step: 10

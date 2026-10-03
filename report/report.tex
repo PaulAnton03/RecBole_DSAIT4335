@@ -1,0 +1,267 @@
+% DSAIT4335 Recommender Systems -- Final Project report (hand-in version)
+%
+% Formatting required by the brief: Times New Roman, 12 pt, line spacing 1.15.
+% Structure required by the brief: first page = group information; main body = at most ONE page per task
+% (results + discussion) with at most 200 WORDS of discussion per task; appendix = additional results
+% (same limits). The main body must be self-contained.
+%
+% Who writes what (RecSys-Project-Plan-and-Team-Split, Part 2): each member writes the subsections of the
+% sub-tasks they own; A edits the whole report for one voice and the page limits.
+%   A  Models        1.1, 1.2, 2.2        C  Weighted hybrid  1.3, 1.5 (weighted), 2.3, 2.6
+%   B  Evaluation    2.1, 2.5, 3.4        D  Content-based    1.1 (content-based), 1.4, 1.5 (others), 2.4, 3.3
+%   E  Re-rankers    3.1, 3.2
+%
+% Build: cd report && tectonic report.tex      (or: latexmk -pdf -outdir=build report.tex)
+% Overleaf: Menu -> Main document -> report/report.tex
+%
+% Generated assets (committed to git, produced by python -m project.experiments.<...>):
+%   ../figures/generated/<name>.pdf        -> \generatedfigure[width=...]{<name>}
+%   tables/generated/<name>.tex            -> \generatedtable{<name>}
+% A red box is shown for an asset that has not been generated/committed yet, so the report always compiles.
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{newtxtext,newtxmath}          % Times New Roman (text + maths)
+\usepackage{setspace}
+\setstretch{1.15}                         % line spacing 1.15
+\usepackage[a4paper,margin=2.2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{xcolor}
+\usepackage[font=small,skip=4pt]{caption}
+\usepackage{enumitem}
+\setlist{nosep,leftmargin=*}
+\usepackage[hidelinks]{hyperref}
+\usepackage{titlesec}
+\titlespacing*{\section}{0pt}{8pt}{4pt}
+\titlespacing*{\subsection}{0pt}{6pt}{2pt}
+
+% ---------------------------------------------------------------------------
+% Title-page data -- fill in
+% ---------------------------------------------------------------------------
+\newcommand{\coursecode}{DSAIT4335}
+\newcommand{\coursename}{Recommender Systems}
+\newcommand{\projecttitle}{Hybrid Recommendation on MovieLens-100K:\\ Accuracy, Coefficients and Societal Re-ranking}
+\newcommand{\groupnumber}{\TODO{group number}}
+
+% ---------------------------------------------------------------------------
+% Helpers
+% ---------------------------------------------------------------------------
+\newcommand{\TODO}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
+\newcommand{\owner}[1]{\marginpar{\footnotesize\color{gray}#1}}   % who writes this subsection (remove before hand-in)
+
+\newcommand{\missingasset}[1]{%
+  \fbox{\parbox{0.85\linewidth}{\centering\color{red}%
+    \textbf{TODO:} generated asset not found\\ \texttt{#1}}}}
+
+\graphicspath{{../figures/generated/}{figures/}}
+\newcommand{\generatedfigure}[2][width=\linewidth]{%
+  \IfFileExists{../figures/generated/#2.pdf}%
+    {\includegraphics[#1]{../figures/generated/#2.pdf}}%
+    {\IfFileExists{figures/generated/#2.pdf}%
+      {\includegraphics[#1]{figures/generated/#2.pdf}}%
+      {\missingasset{figures/generated/\detokenize{#2}.pdf}}}}
+\newcommand{\generatedtable}[1]{%
+  \IfFileExists{tables/generated/#1.tex}%
+    {\input{tables/generated/#1.tex}}%
+    {\IfFileExists{report/tables/generated/#1.tex}%
+      {\input{report/tables/generated/#1.tex}}%
+      {\missingasset{report/tables/generated/\detokenize{#1}.tex}}}}
+
+\begin{document}
+
+% ===========================================================================
+% First page: group information
+% ===========================================================================
+\pagenumbering{roman}
+\begin{titlepage}
+  \centering
+  \vspace*{3cm}
+  {\large \coursecode\ \coursename\ --- Final Project\par}
+  \vspace{1.5cm}
+  {\LARGE\bfseries \projecttitle\par}
+  \vspace{1.5cm}
+  {\Large Group \groupnumber\par}
+  \vspace{1.5cm}
+  {\large\bfseries Group members\par}
+  \vspace{0.5em}
+  \begin{tabular}{ll}
+    \TODO{name} & \TODO{student number}\\
+    \TODO{name} & \TODO{student number}\\
+    \TODO{name} & \TODO{student number}\\
+    \TODO{name} & \TODO{student number}\\
+    \TODO{name} & \TODO{student number}\\
+  \end{tabular}
+  \vfill
+  {\large Delft University of Technology\par}
+  {\normalsize Code: \texttt{project/} in the submitted archive (see \texttt{project/models/README.md} for how to run it)\par}
+\end{titlepage}
+\pagenumbering{arabic}
+
+% ===========================================================================
+% TASK 1 -- Hybrid recommender (max. one page, max. 200 words of discussion)
+% ===========================================================================
+\section{Task 1 --- Hybrid Recommender}
+\label{sec:task1}
+
+\subsection{Individual recommender models (Tasks 1.1 and 1.2)}\owner{A}
+\label{sec:task1-individual}
+\paragraph{Setup (shared by all tasks).}
+All experiments use RecBole on MovieLens-100K with \emph{one} frozen split: seed 2020, a random
+80/10/10 split per user (RecBole \texttt{RS}, \texttt{RO}, \texttt{group\_by: user}), full ranking over all
+items the user has not interacted with, and every held-out interaction counted as relevant (RecBole's default; no
+rating threshold). Train/validation/test hold 80\,808 / 9\,596 / 9\,596 interactions of 943 users and 1\,682
+items; the split is exported once with a checksum manifest and verified to be identical through every model's
+configuration. Every model exports its score for all user--item pairs and a top-50 candidate list per user
+(validation lists mask the training history, test lists mask train\,+\,validation); the final list is the top 10.
+Hybrids and re-rankers only read these files, so nothing is retrained downstream.
+
+\paragraph{Individual models (Task 1.1).}
+We use the course's RecBole models, one per family discussed in class, plus the two na\"ive baselines: Random
+(scores drawn per user; RecBole's own \texttt{Random} gives all users of a batch the same list) and Pop;
+neighbourhood models UserKNN and ItemKNN (cosine, RecBole \texttt{ItemKNN} with \texttt{knn\_method});
+the linear item--item models EASE and SLIMElastic; BPR matrix factorisation (pairwise ranking loss);
+the neural NeuMF and FISM; and the graph models LightGCN and NGCF. The content-based model of
+Assignment~1 is added by Track~D on the same split.
+
+\paragraph{Tuning (Task 1.2).}
+Each model is tuned by an exhaustive grid (7--20 configurations, Table~\ref{tab:tuning-summary} in the appendix)
+on \emph{validation} NDCG@10, the target agreed for every later choice in the project; the test set is used
+once, for the selected configuration. Neural models train for up to 100 epochs with validation after every
+epoch and early stopping after 10 epochs without improvement, instead of the course configs' fixed 20 epochs.
+Selected: ItemKNN $k{=}200$, UserKNN $k{=}50$ (both without shrinkage), EASE $\lambda{=}500$, SLIM
+$\alpha{=}0.1$, $l_1{=}0.01$, BPR 128 factors with learning rate $10^{-3}$, NeuMF MLP $[128,64,32]$ with
+dropout 0.1, LightGCN 3 layers with learning rate $5\cdot10^{-3}$.
+
+\emph{Discussion.} Tuning matters most where the course configuration left a model under-trained: LightGCN
+rises from 0.136 to 0.243 validation NDCG@10 (its best epoch is 94 of 100) and BPR from 0.199 to 0.241, both
+mainly through a higher learning rate or a longer schedule; the memory-based and linear models move by at most
+0.003 because, with 85 interactions per user on average, item--item statistics are already well estimated
+and extra neighbours or shrinkage barely change the ranking. EASE prefers strong regularisation
+($\lambda{=}500$; $\lambda{=}10$ loses 0.05), consistent with a dense, small catalogue in which an
+unregularised item--item solution overfits co-occurrence noise.
+
+\TODO{D: one sentence on the content-based model (Assignment 1 BERT model on the same split, exported as a score file).}
+
+\subsection{Weighted hybrid with learned coefficients (Task 1.3)}\owner{C}
+\TODO{C: regression model used to learn the coefficients; fitted on the validation candidates (union of each model's top-50); per-user score normalisation; the learned weights.}
+
+\subsection{Other hybrid models (Tasks 1.4 and 1.5)}\owner{D, C}
+\TODO{D: switching and mixed hybrids and why; C/D: how all hybrids were tuned on validation NDCG@10.}
+
+\clearpage
+% ===========================================================================
+% TASK 2 -- Evaluation of effectiveness (max. one page, max. 200 words of discussion)
+% ===========================================================================
+\section{Task 2 --- Evaluation of Effectiveness}
+\label{sec:task2}
+
+\subsection{Evaluation metrics (Task 2.1)}\owner{B}
+\TODO{B: accuracy and beyond-accuracy metrics as implemented in \texttt{project/metrics} (validated against RecBole on the Track A lists).}
+
+\subsection{Comparison with the baselines (Task 2.2)}\owner{A}
+\label{sec:task2-baselines}
+Table~\ref{tab:model-results} reports the tuned models on the test split (accuracy metrics computed by
+RecBole on the exported lists; beyond-accuracy columns are added from Section~\ref{sec:task2} once Track~B's
+metrics are in; FISM and NGCF are reported with the course configuration, untuned).
+
+\begin{table}[htbp]
+  \centering
+  \caption{Test-set accuracy of the individual models (lists of 10, all held-out interactions relevant); best
+  value per column in bold. The last column is the validation NDCG@10 used for model selection.}
+  \label{tab:model-results}
+  \small\setlength{\tabcolsep}{4pt}
+  \generatedtable{model_results}
+\end{table}
+
+\emph{Discussion.} Pop is a strong na\"ive baseline here: one unpersonalised list hits a relevant film for
+47\% of the users (Random: 7\%) because MovieLens-100K's interactions concentrate on a few hundred films.
+All personalised models beat it, yet 47--61\% of their top-10 slots are films Pop also lists, and their
+recommendations were rated by 23--27\% of the training users on average (Pop 33\%, Random under 5\%).
+The item--item linear models EASE and SLIM are the most accurate: with 943 users and 1\,682 items the
+co-occurrence matrix is dense enough for a closed-form, strongly regularised solution, whereas the
+embedding models need long training to reach a similar level on this little data. The accuracy winners
+thus inherit much of Pop's popularity bias, which Tasks~2.5 and~3 examine.
+
+\subsection{Hybrid coefficient analysis (Task 2.3)}\owner{C}
+\TODO{C: contribution of each individual recommender to the hybrid (coefficients, drop-one ablation).}
+
+\subsection{Further analyses (Task 2.4)}\owner{D}
+\TODO{D: overlap between the models' lists; what an oracle best-model-per-user would score.}
+
+\subsection{User and item groups (Task 2.5)}\owner{B}
+\TODO{B: accuracy and beyond-accuracy per user group (activity, popularity taste) and item group (head/mid/tail).}
+
+\subsection{Insights (Task 2.6)}\owner{C}
+\TODO{C: group-specific hybrid motivated by 2.5.}
+
+\clearpage
+% ===========================================================================
+% TASK 3 -- Societal aspects (max. one page, max. 200 words of discussion)
+% ===========================================================================
+\section{Task 3 --- Societal Aspects}
+\label{sec:task3}
+
+\subsection{Re-rankers (Task 3.1)}\owner{E}
+\TODO{E: diversity (MMR), calibration, user-side and item-side fairness re-rankers on the top-50 candidates.}
+
+\subsection{Effect of the re-rankers (Task 3.2)}\owner{E}
+\TODO{E: trade-off curves (NDCG@10 against the target metric over $\lambda$) on the best models and the hybrid.}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Results with re-rankers applied.}
+  \label{tab:reranker-results}
+  \generatedtable{reranker_results}
+\end{table}
+
+\subsection{Hybrids combined with re-rankers (Task 3.3)}\owner{D}
+\TODO{D: re-rank then combine versus combine then re-rank.}
+
+\subsection{Impact on user and item groups (Task 3.4)}\owner{B}
+\TODO{B: before/after re-ranking per group.}
+
+\clearpage
+% ===========================================================================
+% APPENDIX -- additional results (same limits per task)
+% ===========================================================================
+\appendix
+\section{Additional results for Task 1}
+\label{app:task1}
+\subsection{Hyper-parameter search (Task 1.2)}
+Search spaces (\texttt{project/configs/hyper/}): ItemKNN and UserKNN $k\in\{10,20,50,100,200\}$,
+shrink $\in\{0,10,50,100\}$; EASE $\lambda\in\{10,50,100,250,500,1000,2000\}$; SLIMElastic
+$\alpha\in\{0.1,0.2,0.5,1\}$, $l_1\in\{0.01,0.02,0.05,0.1\}$; BPR factors $\in\{32,64,128\}$,
+learning rate $\in\{5\cdot10^{-4},10^{-3},5\cdot10^{-3}\}$; NeuMF learning rate $\in\{10^{-3},5\cdot10^{-3}\}$,
+MLP $\in\{[64,32],[128,64,32]\}$, dropout $\in\{0.1,0.3\}$; LightGCN layers $\in\{1,2,3\}$, learning rate
+$\in\{10^{-3},5\cdot10^{-3}\}$, $L_2\in\{10^{-4},10^{-3}\}$. Every configuration is listed in
+\texttt{results/processed/tuning/<Model>.csv}. Two selected values sit on the border of their grid
+(ItemKNN $k{=}200$, BPR 128 factors); the neighbouring value is within 0.003 NDCG@10, so the grids were not
+extended. All numbers are single runs with seed 2020; a 3-seed variance check is left for the final release.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Grid search per model: number of configurations, selected values, and NDCG@10 before (course
+  configuration) and after tuning on validation and test.}
+  \label{tab:tuning-summary}
+  \small\setlength{\tabcolsep}{4pt}
+  \generatedtable{tuning_summary}
+\end{table}
+
+\subsection{Accuracy overview (Task 2.2)}
+\begin{figure}[htbp]
+  \centering
+  \generatedfigure[width=\linewidth]{model_comparison}
+  \caption{Test-set NDCG@10, Recall@10 and Precision@10 per model (hatched: baselines; dotted line: Pop).}
+  \label{fig:model-comparison}
+\end{figure}
+
+\section{Additional results for Task 2}
+\TODO{B, C, D: full per-group tables, extra metrics, alternative relevance rule.}
+
+\section{Additional results for Task 3}
+\TODO{E: extra $\lambda$ values, per-group tables after re-ranking.}
+
+\end{document}
