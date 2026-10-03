@@ -1,0 +1,5 @@
+# Tuned hyper-parameters for ItemKNN -- written by project.experiments.tune_models, do not edit by hand.
+# Search space: project/configs/hyper/ItemKNN.hyper (20 configurations, exhaustive grid).
+# Selection: best validation NDCG@10 = 0.2230. All trials: results/processed/tuning/ItemKNN.csv
+k: 200
+shrink: 0

@@ -1,0 +1,5 @@
+# Tuned hyper-parameters for UserKNN -- written by project.experiments.tune_models, do not edit by hand.
+# Search space: project/configs/hyper/UserKNN.hyper (20 configurations, exhaustive grid).
+# Selection: best validation NDCG@10 = 0.2355. All trials: results/processed/tuning/UserKNN.csv
+k: 50
+shrink: 0

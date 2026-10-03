@@ -1,0 +1,9 @@
+# Tuned hyper-parameters for NeuMF -- written by project.experiments.tune_models, do not edit by hand.
+# Search space: project/configs/hyper/NeuMF.hyper (8 configurations, exhaustive grid).
+# Selection: best validation NDCG@10 = 0.2293. All trials: results/processed/tuning/NeuMF.csv
+dropout_prob: 0.1
+learning_rate: 0.001
+mlp_hidden_size:
+- 128
+- 64
+- 32

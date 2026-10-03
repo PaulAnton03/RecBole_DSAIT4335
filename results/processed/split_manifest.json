@@ -1,0 +1,23 @@
+{
+  "dataset": "ml-100k",
+  "seed": 2020,
+  "eval_args": "RS [0.8,0.1,0.1], group_by user, order RO, mode full",
+  "train": {
+    "interactions": 80808,
+    "users": 943,
+    "items": 1655,
+    "sha256": "77c049632dd17f932f1c6816cc9199cc5f53b94207be392fa74493ef4f583f12"
+  },
+  "valid": {
+    "interactions": 9596,
+    "users": 943,
+    "items": 1236,
+    "sha256": "daa1cd6b87ed7245939e8a3c2a51a78fbfc8b8c9e049b5b8f8e9235a67a73b7b"
+  },
+  "test": {
+    "interactions": 9596,
+    "users": 943,
+    "items": 1246,
+    "sha256": "5d61446dac23b0be02bafaf379a9c9ed8c16847db75536fbc6dea0a15c48239f"
+  }
+}

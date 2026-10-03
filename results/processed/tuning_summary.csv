@@ -1,0 +1,8 @@
+model,n_trials,best_params,valid_ndcg@10_tuned,tuning_seconds
+ItemKNN,20,"{""k"": 200, ""shrink"": 0}",0.223,14
+UserKNN,20,"{""k"": 50, ""shrink"": 0}",0.2355,12
+EASE,7,"{""reg_weight"": 500.0}",0.2568,5
+SLIMElastic,16,"{""alpha"": 0.1, ""l1_ratio"": 0.01}",0.2577,83
+BPR,9,"{""embedding_size"": 128, ""learning_rate"": 0.001}",0.2411,79
+NeuMF,8,"{""dropout_prob"": 0.1, ""learning_rate"": 0.001, ""mlp_hidden_size"": [128, 64, 32]}",0.2293,103
+LightGCN,12,"{""learning_rate"": 0.005, ""n_layers"": 3, ""reg_weight"": 0.0001}",0.2432,287
