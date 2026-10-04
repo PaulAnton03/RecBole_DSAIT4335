@@ -1,8 +1,8 @@
 Model,Configs,Selected hyper-parameters,valid NDCG@10 untuned,valid NDCG@10 tuned,test NDCG@10 untuned,test NDCG@10 tuned
-ItemKNN,20,"k=200, shrink=0",0.2213,0.222991,0.2834,0.289355
-UserKNN,20,"k=50, shrink=0",0.2345,0.235521,0.2873,0.287725
-EASE,7,reg_weight=500.0,0.2563,0.256809,0.3295,0.330175
-SLIMElastic,16,"alpha=0.1, l1_ratio=0.01",0.2553,0.25775,0.3235,0.323546
-BPR,9,"embedding_size=128, learning_rate=0.001",0.1994,0.241095,0.2494,0.291194
-NeuMF,8,"dropout_prob=0.1, learning_rate=0.001, mlp_hidden_size=[128, 64, 32]",0.2168,0.229342,0.2678,0.281552
-LightGCN,12,"learning_rate=0.005, n_layers=3, reg_weight=0.0001",0.1363,0.243176,0.1586,0.302824
+ItemKNN,20,"k=200, shrink=0",0.2213,0.223,0.2834,0.2894
+UserKNN,20,"k=50, shrink=0",0.2345,0.2355,0.2873,0.2877
+EASE,7,reg_weight=500.0,0.2563,0.2568,0.3295,0.3302
+SLIMElastic,16,"alpha=0.1, l1_ratio=0.01",0.2553,0.2577,0.3235,0.3235
+BPR,9,"embedding_size=128, learning_rate=0.001",0.1994,0.2411,0.2494,0.2912
+NeuMF,8,"dropout_prob=0.1, learning_rate=0.001, mlp_hidden_size=[128, 64, 32]",0.2168,0.2293,0.2678,0.2816
+LightGCN,12,"learning_rate=0.005, n_layers=3, reg_weight=0.0001",0.1363,0.2432,0.1586,0.3028

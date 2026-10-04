@@ -13,8 +13,7 @@ Everything is run from the repository root inside the virtual environment (see `
 | 1. Quick, untuned scores (day 2) | `python -m project.experiments.run_models --mode quick --models all` | score files + top-50 lists for all 11 models, `results/processed/recbole_metrics_quick.csv` |
 | 2. Tuning (Task 1.2) | `python -m project.experiments.tune_models` | `project/configs/models/<Model>.yaml`, `results/processed/tuning/<Model>.csv`, `results/processed/tuning_summary.csv` |
 | 3. Final, tuned scores (release) | `python -m project.experiments.run_models --mode tuned` | score files + top-50 lists of the tuned models, `results/processed/recbole_metrics_tuned.csv` |
-| 4. Our metrics on every list (Track B) | `python -m project.experiments.evaluate_models` | `results/processed/metrics_{valid,test}.csv` (see `project/metrics/README.md`) |
-| 5. Main results table (Task 2.2) | `python -m project.experiments.results_table` | `report/tables/generated/{model_results,tuning_summary}.tex`, `figures/generated/model_comparison.pdf`, `results/processed/model_results.csv` |
+| 4. Main results table (Task 2.2) | `python -m project.experiments.results_table` | `report/tables/generated/{model_results,tuning_summary}.tex`, `figures/generated/model_comparison.pdf`, `results/processed/model_results.csv` |
 | Tests | `python -m pytest project/tests -q` | |
 
 `--models` accepts `default` (the plan's shortlist: Random, Pop, ItemKNN, UserKNN, EASE, BPR, NeuMF, LightGCN),
@@ -52,7 +51,7 @@ metric implementations can be validated against RecBole's numbers on these very 
 | Name | RecBole class | Family | Tuned hyper-parameters (`project/configs/hyper/<Name>.hyper`) |
 | --- | --- | --- | --- |
 | Random | `Random` (our per-user variant, `random_per_user.py`) | baseline | – |
-| Pop | `Pop` (our exact-count variant, `pop_exact.py`) | baseline | – |
+| Pop | `Pop` | baseline | – |
 | ItemKNN | `ItemKNN` (`knn_method: item`) | neighbourhood | `k`, `shrink` |
 | UserKNN | `ItemKNN` (`knn_method: user`) | neighbourhood | `k`, `shrink` |
 | EASE | `EASE` | linear item–item | `reg_weight` |
@@ -72,15 +71,6 @@ Why a custom Random: RecBole's `Random.full_sort_predict` draws one random vecto
 every user, so with one evaluation batch all users would get the same list. Ours draws per user (seeded), which is
 what a random baseline should be for coverage/diversity metrics.
 
-Why a custom Pop: RecBole's `Pop` counts with `item_cnt[item] = item_cnt[item] + 1` per training batch, which adds 1
-only once per batch for a repeated id, so it counts *batches* containing an item, not interactions. The counts of all
-popular films saturate (11 distinct scores on ML-100K) and `torch.topk`'s tie-breaking picks the list (test NDCG@10
-0.100–0.103 depending on the machine). Ours counts every training interaction once (test NDCG@10 0.142).
-
-Reported numbers: every table and figure is computed with our own metrics (`project/metrics`, Task 2.1) on the
-exported lists; RecBole's printed metrics (`recbole_metrics_*.csv`) are only used for model selection during tuning
-and as a cross-check (`results/processed/metric_validation.csv`).
-
 ## 4. Files
 
 ```
@@ -88,7 +78,6 @@ project/models/registry.py          model list, config file resolution
 project/models/pipeline.py          train + evaluate + export (score matrix, top-50, export check)
 project/models/tuning.py            grid search with RecBole HyperTuning on validation NDCG@10
 project/models/random_per_user.py   per-user Random baseline
-project/models/pop_exact.py         Pop baseline with exact interaction counts
 project/experiments/export_split.py / run_models.py / tune_models.py / results_table.py
 project/utils/data_formats.py       the shared formats (loaders and writers)
 project/tests/test_data_formats.py  unit tests

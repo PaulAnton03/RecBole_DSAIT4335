@@ -31,7 +31,7 @@ updates never conflicts with our documentation. **This file is the group guide.*
 │   ├── configs/                   #   our RecBole/experiment YAML configs (base.yaml = shared protocol, hyper/, models/)
 │   ├── models/                    #   Track A: individual models -- train, tune, export (see project/models/README.md)
 │   ├── hybrids/                   #   Task 1: hybrid recommenders
-│   ├── metrics/                   #   Task 2.1: accuracy + beyond-accuracy metrics (see project/metrics/README.md)
+│   ├── metrics/                   #   Task 2: accuracy + beyond-accuracy metrics
 │   ├── rerankers/                 #   Task 3: diversity / calibration / fairness rerankers
 │   ├── analysis/                  #   coefficient, user-group, item-group analyses
 │   ├── experiments/               #   runnable entry points: python -m project.experiments.<name>
@@ -115,12 +115,9 @@ python -m project.experiments.export_split                      # 0. frozen spli
 python -m project.experiments.run_models --mode quick --models all   # 1. untuned scores + top-50 lists
 python -m project.experiments.tune_models                       # 2. grid search on validation NDCG@10
 python -m project.experiments.run_models --mode tuned           # 3. final (tuned) scores + lists
-python -m project.experiments.evaluate_models                   # 4. our own metrics on every list (Track B)
-python -m project.experiments.results_table                     # 5. report table + figure (from our metrics)
+python -m project.experiments.results_table                     # 4. report table + figure
+python -m project.experiments.evaluate_models                   # 5. our own metrics (Track B, see project/metrics/README.md)
 ```
-
-Every model, hybrid and re-ranker is scored with our own metrics (`project/metrics`, Task 2.1), never with
-RecBole's evaluator; see [`project/metrics/README.md`](project/metrics/README.md) for the formulas and conventions.
 
 ### Evaluating separately (assignment: "perform the evaluation separately")
 
@@ -167,8 +164,7 @@ save_latex_table(df, "model_results")    # -> report/tables/generated/model_resu
 ```
 
 Agreed file names (the report already references them): `model_comparison`, `hybrid_coefficients`,
-`user_group_analysis` (figures) and `model_results`, `tuning_summary`, `beyond_accuracy_results`, `metric_validation`,
-`reranker_results` (tables). Add new ones with a fixed,
+`user_group_analysis` (figures) and `model_results`, `tuning_summary`, `reranker_results`, `beyond_accuracy_results`, `metric_validation` (tables). Add new ones with a fixed,
 descriptive `snake_case` name — never put a date, run id or seed in the name; overwrite in place. Commit a generated
 file together with the code change that produced it. Generated tables contain only the `tabular`; the caption and
 label live in `report/report.tex`.
@@ -224,8 +220,6 @@ Then bring feature branches up to date with `git merge main`, and re-run the `pi
 
 ## 8. Known quirks (all from the lecturer's code, harmless unless noted)
 
-- **Not harmless:** RecBole's `Pop` counts training *batches* that contain an item, not interactions, so its
-  scores saturate and ties decide the list. We use `project/models/pop_exact.py` instead (see `project/models/README.md`).
 - `WARNING Could not save embeddings: BPR.forward() missing 2 required positional arguments` after each epoch.
 - `FutureWarning` about `torch.cuda.amp.GradScaler` (`trainer.py`).
 - `FutureWarning` about chained assignment in `dataset.py` (lines 648/650) — this is the `fillna(inplace=True)` that

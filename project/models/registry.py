@@ -71,17 +71,10 @@ def _random_class():
     return RandomPerUser
 
 
-def _pop_class():
-    from project.models.pop_exact import PopExact
-
-    return PopExact
-
-
 _SPECS = [
     ModelSpec("Random", "Random", "baseline", "uniform random scores (per user)", baseline=True,
               tunable=False, model_class=_random_class()),
-    ModelSpec("Pop", "Pop", "baseline", "most-popular items in the training set (exact counts)", baseline=True,
-              tunable=False, model_class=_pop_class()),
+    ModelSpec("Pop", "Pop", "baseline", "most-popular items in the training set", baseline=True, tunable=False),
     ModelSpec("ItemKNN", "ItemKNN", "neighbourhood", "item-based cosine kNN (k, shrink)"),
     ModelSpec("UserKNN", "ItemKNN", "neighbourhood", "user-based cosine kNN (RecBole ItemKNN, knn_method=user)"),
     ModelSpec("EASE", "EASE", "linear", "closed-form item-item linear model (reg_weight)"),

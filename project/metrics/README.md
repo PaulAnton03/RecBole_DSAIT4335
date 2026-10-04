@@ -96,8 +96,9 @@ Lecture = DSAIT4335 slides. "Choice" marks a convention the slides leave open.
   rarest observed item.
 - **Serendipity.** "Unexpected and useful" (slides 16–17), with unexpectedness measured against a popularity
   baseline as the slide suggests: an item counts when it is relevant *and* not among the `K` most popular items
-  outside the user's history (`Pop_u@K`, ties broken by catalogue order). Pop scores ≈ 0 (on `test` the
-  baseline also counts the validation interactions, which the Pop model was not trained on).
+  outside the user's history (`Pop_u@K`, ties broken by catalogue order). An exact most-popular list scores 0;
+  RecBole's `Pop` scores about 0.02, because it ranks by the number of training batches that contain a film
+  (including sampled negatives), not by its number of interactions.
 - **Popularity groups.** Items sorted by `c_i`: **head** = the most popular items that together hold ≥ 20 % of
   the known interactions, **tail** = the least popular items that together hold ≤ 20 % (incl. `c_i = 0`),
   **mid** = the rest. Items with equal counts always share a group. On the test split: head 58 items
