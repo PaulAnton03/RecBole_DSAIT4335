@@ -69,16 +69,16 @@ BPR,valid,coverage@10,0.341855,0.341855,RecBole metric code
 BPR,valid,gini@10,0.896811,0.896811,RecBole metric code
 BPR,valid,entropy@10,0.729545,0.729545,RecBole metric code
 BPR,valid,avgpop@10,0.239655,0.239655,RecBole metric code
-NeuMF,valid,ndcg@10,0.229686,0.2297,RecBole run (4 decimals)
-NeuMF,valid,recall@10,0.218064,0.2181,RecBole run (4 decimals)
-NeuMF,valid,precision@10,0.158431,0.1584,RecBole run (4 decimals)
-NeuMF,valid,mrr@10,0.379608,0.3796,RecBole run (4 decimals)
-NeuMF,valid,hit@10,0.755037,0.755,RecBole run (4 decimals)
-NeuMF,valid,map@10,0.124574,0.1246,RecBole run (4 decimals)
-NeuMF,valid,coverage@10,0.3044,0.3044,RecBole metric code
-NeuMF,valid,gini@10,0.909125,0.909125,RecBole metric code
-NeuMF,valid,entropy@10,0.714203,0.714203,RecBole metric code
-NeuMF,valid,avgpop@10,0.239338,0.239338,RecBole metric code
+NeuMF,valid,ndcg@10,0.229342,0.2293,RecBole run (4 decimals)
+NeuMF,valid,recall@10,0.217425,0.2174,RecBole run (4 decimals)
+NeuMF,valid,precision@10,0.158112,0.1581,RecBole run (4 decimals)
+NeuMF,valid,mrr@10,0.380906,0.3809,RecBole run (4 decimals)
+NeuMF,valid,hit@10,0.753977,0.754,RecBole run (4 decimals)
+NeuMF,valid,map@10,0.124107,0.1241,RecBole run (4 decimals)
+NeuMF,valid,coverage@10,0.299049,0.299049,RecBole metric code
+NeuMF,valid,gini@10,0.910927,0.910927,RecBole metric code
+NeuMF,valid,entropy@10,0.71163,0.71163,RecBole metric code
+NeuMF,valid,avgpop@10,0.24078,0.24078,RecBole metric code
 FISM,valid,ndcg@10,0.120768,0.1208,RecBole run (4 decimals)
 FISM,valid,recall@10,0.110549,0.1105,RecBole run (4 decimals)
 FISM,valid,precision@10,0.0911983,0.0912,RecBole run (4 decimals)
@@ -99,16 +99,16 @@ LightGCN,valid,coverage@10,0.32283,0.32283,RecBole metric code
 LightGCN,valid,gini@10,0.901348,0.901348,RecBole metric code
 LightGCN,valid,entropy@10,0.724361,0.724361,RecBole metric code
 LightGCN,valid,avgpop@10,0.240014,0.240014,RecBole metric code
-NGCF,valid,ndcg@10,0.151242,0.1512,RecBole run (4 decimals)
-NGCF,valid,recall@10,0.136137,0.1361,RecBole run (4 decimals)
-NGCF,valid,precision@10,0.116013,0.116,RecBole run (4 decimals)
-NGCF,valid,mrr@10,0.268029,0.268,RecBole run (4 decimals)
-NGCF,valid,hit@10,0.602333,0.6023,RecBole run (4 decimals)
-NGCF,valid,map@10,0.0739463,0.0739,RecBole run (4 decimals)
-NGCF,valid,coverage@10,0.341855,0.341855,RecBole metric code
-NGCF,valid,gini@10,0.843186,0.843186,RecBole metric code
-NGCF,valid,entropy@10,0.787894,0.787894,RecBole metric code
-NGCF,valid,avgpop@10,0.165784,0.165784,RecBole metric code
+NGCF,valid,ndcg@10,0.153197,0.1532,RecBole run (4 decimals)
+NGCF,valid,recall@10,0.13872,0.1387,RecBole run (4 decimals)
+NGCF,valid,precision@10,0.117815,0.1178,RecBole run (4 decimals)
+NGCF,valid,mrr@10,0.270078,0.2701,RecBole run (4 decimals)
+NGCF,valid,hit@10,0.607635,0.6076,RecBole run (4 decimals)
+NGCF,valid,map@10,0.0749304,0.0749,RecBole run (4 decimals)
+NGCF,valid,coverage@10,0.343639,0.343639,RecBole metric code
+NGCF,valid,gini@10,0.842501,0.842501,RecBole metric code
+NGCF,valid,entropy@10,0.788483,0.788483,RecBole metric code
+NGCF,valid,avgpop@10,0.16579,0.16579,RecBole metric code
 Random,test,ndcg@10,0.00782029,0.0078,RecBole run (4 decimals)
 Random,test,recall@10,0.00623016,0.0062,RecBole run (4 decimals)
 Random,test,precision@10,0.00742312,0.0074,RecBole run (4 decimals)
@@ -179,16 +179,16 @@ BPR,test,coverage@10,0.365636,0.365636,RecBole metric code
 BPR,test,gini@10,0.886126,0.886126,RecBole metric code
 BPR,test,entropy@10,0.743358,0.743358,RecBole metric code
 BPR,test,avgpop@10,0.256642,0.256642,RecBole metric code
-NeuMF,test,ndcg@10,0.27993,0.2799,RecBole run (4 decimals)
-NeuMF,test,recall@10,0.236406,0.2364,RecBole run (4 decimals)
-NeuMF,test,precision@10,0.190986,0.191,RecBole run (4 decimals)
-NeuMF,test,mrr@10,0.466432,0.4664,RecBole run (4 decimals)
-NeuMF,test,hit@10,0.768823,0.7688,RecBole run (4 decimals)
-NeuMF,test,map@10,0.167615,0.1676,RecBole run (4 decimals)
-NeuMF,test,coverage@10,0.332342,0.332342,RecBole metric code
-NeuMF,test,gini@10,0.899365,0.899365,RecBole metric code
-NeuMF,test,entropy@10,0.727709,0.727709,RecBole metric code
-NeuMF,test,avgpop@10,0.25676,0.25676,RecBole metric code
+NeuMF,test,ndcg@10,0.281552,0.2816,RecBole run (4 decimals)
+NeuMF,test,recall@10,0.237212,0.2372,RecBole run (4 decimals)
+NeuMF,test,precision@10,0.191835,0.1918,RecBole run (4 decimals)
+NeuMF,test,mrr@10,0.469949,0.4699,RecBole run (4 decimals)
+NeuMF,test,hit@10,0.772004,0.772,RecBole run (4 decimals)
+NeuMF,test,map@10,0.168769,0.1688,RecBole run (4 decimals)
+NeuMF,test,coverage@10,0.322235,0.322235,RecBole metric code
+NeuMF,test,gini@10,0.900552,0.900552,RecBole metric code
+NeuMF,test,entropy@10,0.7263,0.7263,RecBole metric code
+NeuMF,test,avgpop@10,0.257638,0.257638,RecBole metric code
 FISM,test,ndcg@10,0.140862,0.1409,RecBole run (4 decimals)
 FISM,test,recall@10,0.121997,0.122,RecBole run (4 decimals)
 FISM,test,precision@10,0.105514,0.1055,RecBole run (4 decimals)
@@ -209,13 +209,13 @@ LightGCN,test,coverage@10,0.350773,0.350773,RecBole metric code
 LightGCN,test,gini@10,0.889556,0.889556,RecBole metric code
 LightGCN,test,entropy@10,0.739878,0.739878,RecBole metric code
 LightGCN,test,avgpop@10,0.255598,0.255598,RecBole metric code
-NGCF,test,ndcg@10,0.18207,0.1821,RecBole run (4 decimals)
-NGCF,test,recall@10,0.151079,0.1511,RecBole run (4 decimals)
-NGCF,test,precision@10,0.139661,0.1397,RecBole run (4 decimals)
-NGCF,test,mrr@10,0.311972,0.312,RecBole run (4 decimals)
-NGCF,test,hit@10,0.637328,0.6373,RecBole run (4 decimals)
-NGCF,test,map@10,0.0982165,0.0982,RecBole run (4 decimals)
+NGCF,test,ndcg@10,0.182988,0.183,RecBole run (4 decimals)
+NGCF,test,recall@10,0.153092,0.1531,RecBole run (4 decimals)
+NGCF,test,precision@10,0.139767,0.1398,RecBole run (4 decimals)
+NGCF,test,mrr@10,0.31395,0.314,RecBole run (4 decimals)
+NGCF,test,hit@10,0.640509,0.6405,RecBole run (4 decimals)
+NGCF,test,map@10,0.0984638,0.0985,RecBole run (4 decimals)
 NGCF,test,coverage@10,0.347206,0.347206,RecBole metric code
-NGCF,test,gini@10,0.840414,0.840414,RecBole metric code
-NGCF,test,entropy@10,0.790212,0.790212,RecBole metric code
-NGCF,test,avgpop@10,0.181862,0.181862,RecBole metric code
+NGCF,test,gini@10,0.839832,0.839832,RecBole metric code
+NGCF,test,entropy@10,0.790665,0.790665,RecBole metric code
+NGCF,test,avgpop@10,0.181958,0.181958,RecBole metric code
