@@ -10,7 +10,7 @@ Serendipity (slides 16-17: "unexpected and useful"; unexpectedness measured agai
 recommender such as popularity). The slide gives no formula, so we choose the common
 baseline-based one: an item is serendipitous when it is relevant (a held-out item) AND not in the
 list the popularity baseline would show this user (the K most popular items outside the user's
-history). Serendipity@K = |{i in L : i in T, i not in Pop_u@K}| / K. Pop itself scores 0.
+history). Serendipity@K = |{i in L : i in T, i not in Pop_u@K}| / K. Pop itself scores about 0.
 """
 from __future__ import annotations
 

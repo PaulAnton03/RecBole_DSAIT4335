@@ -120,7 +120,9 @@ Hybrids and re-rankers only read these files, so nothing is retrained downstream
 
 \paragraph{Individual models (Task 1.1).}
 We use the course's RecBole models, one per family discussed in class, plus the two na\"ive baselines: Random
-(scores drawn per user; RecBole's own \texttt{Random} gives all users of a batch the same list) and Pop;
+(scores drawn per user; RecBole's own \texttt{Random} gives all users of a batch the same list) and Pop
+(exact training counts; RecBole's \texttt{Pop} counts the training \emph{batches} that contain a film, so the
+counts of all popular films saturate and tie-breaking picks the list, test NDCG@10 0.10 instead of 0.14);
 neighbourhood models UserKNN and ItemKNN (cosine, RecBole \texttt{ItemKNN} with \texttt{knn\_method});
 the linear item--item models EASE and SLIMElastic; BPR matrix factorisation (pairwise ranking loss);
 the neural NeuMF and FISM; and the graph models LightGCN and NGCF. The content-based model of
@@ -170,7 +172,7 @@ diversity (ILD, mean pairwise Jaccard distance between genre sets), catalogue co
 self-information $-\log_2$ of a film's share of interactions), serendipity (relevant films that a most-popular
 list would not have shown), genre miscalibration MC$_{KL}$ between history and list, average popularity and
 long-tail share; for fairness, the user-side GRU (NDCG gap between the 20\% most active users and the rest) and
-popularity deviation UPD, and the item-side Gini index of exposure. Validation: on all 18 lists our accuracy
+popularity deviation UPD, and the item-side Gini index of exposure. Validation: on all 22 lists our accuracy
 metrics equal the values RecBole reported to its 4-decimal rounding, and coverage, Gini, entropy and AvgPop equal
 RecBole's own metric code applied to our lists (Table~\ref{tab:metric-validation}); the metrics RecBole lacks are
 pinned down by hand-computed tests, including the lecture's worked examples.
@@ -187,7 +189,7 @@ pinned down by hand-computed tests, including the lecture's worked examples.
 \end{table}
 
 \emph{Discussion.} The beyond-accuracy metrics separate the models by family more than accuracy does. The
-embedding models (BPR, NeuMF, LightGCN) cover 33--37\% of the catalogue, recommend less popular films (AvgPop
+tuned embedding models (BPR, NeuMF, LightGCN) cover 33--37\% of the catalogue, recommend less popular films (AvgPop
 0.26) and follow each user's taste for popular or niche films best (UPD 0.13--0.14). The neighbourhood and
 item--item linear models cover only 17--23\% (AvgPop 0.27--0.30): they score a film by aggregating its
 co-occurrence with the user's films or neighbours, which favours films that co-occur with many others. EASE and
@@ -199,27 +201,28 @@ average against 6, so even Random gives them 3.6 times the NDCG of inactive user
 
 \subsection{Comparison with the baselines (Task 2.2)}\owner{A}
 \label{sec:task2-baselines}
-Table~\ref{tab:model-results} reports the tuned models on the test split (accuracy metrics computed by
-RecBole on the exported lists; beyond-accuracy columns are added from Section~\ref{sec:task2} once Track~B's
-metrics are in; FISM and NGCF are reported with the course configuration, untuned).
+Table~\ref{tab:model-results} reports the tuned models on the test split, scored with our own metrics
+(Section~\ref{sec:task2-metrics}) on the exported lists; their beyond-accuracy metrics are in
+Table~\ref{tab:beyond-accuracy}. FISM and NGCF are reported with the course configuration, untuned.
 
 \begin{table}[htbp]
   \centering
-  \caption{Test-set accuracy of the individual models (lists of 10, all held-out interactions relevant); best
-  value per column in bold. The last column is the validation NDCG@10 used for model selection.}
+  \caption{Test-set accuracy of the individual models with our metrics (lists of 10, all held-out interactions
+  relevant); best value per column in bold. The last column is the validation NDCG@10 used for model selection.}
   \label{tab:model-results}
   \small\setlength{\tabcolsep}{4pt}
   \generatedtable{model_results}
 \end{table}
 
 \emph{Discussion.} Pop is a strong na\"ive baseline here: one unpersonalised list hits a relevant film for
-47\% of the users (Random: 7\%) because MovieLens-100K's interactions concentrate on a few hundred films.
-All personalised models beat it, yet 47--61\% of their top-10 slots are films Pop also lists, and their
-recommendations were rated by 23--27\% of the training users on average (Pop 33\%, Random under 5\%).
-The item--item linear models EASE and SLIM are the most accurate: with 943 users and 1\,682 items the
-co-occurrence matrix is dense enough for a closed-form, strongly regularised solution, whereas the
-embedding models need long training to reach a similar level on this little data. The accuracy winners
-thus inherit much of Pop's popularity bias, which Tasks~2.5 and~3 examine.
+58\% of the users (Random: 7\%) because MovieLens-100K's interactions concentrate on a few hundred films.
+Every tuned model beats it, but the untuned FISM only matches it (NDCG@10 0.141 vs.\ 0.142): 90\% of its
+top-10 slots are Pop's films, so with the course configuration it has not moved away from the popularity
+ranking. The tuned models share only 22--31\% of their slots with Pop, yet their films were rated by 26--30\%
+of the users on average (Pop 42\%, Random 5\%). The item--item linear models EASE and SLIM are the most
+accurate: with 943 users and 1\,682 items the co-occurrence matrix is dense enough for a closed-form, strongly
+regularised solution, whereas the embedding models need long training to reach a similar level on this little
+data. The accuracy winners thus still favour popular films, which Tasks~2.5 and~3 examine.
 
 \subsection{Hybrid coefficient analysis (Task 2.3)}\owner{C}
 \TODO{C: contribution of each individual recommender to the hybrid (coefficients, drop-one ablation).}
@@ -280,7 +283,9 @@ extended. All numbers are single runs with seed 2020; a 3-seed variance check is
 \begin{table}[htbp]
   \centering
   \caption{Grid search per model: number of configurations, selected values, and NDCG@10 before (course
-  configuration) and after tuning on validation and test.}
+  configuration) and after tuning on validation and test. Tuned values are our metrics on the exported lists;
+  untuned values are as RecBole reported them (those lists were replaced by the tuned ones; RecBole's NDCG@10
+  equals ours to 4 decimals, Table~\ref{tab:metric-validation}).}
   \label{tab:tuning-summary}
   \small\setlength{\tabcolsep}{4pt}
   \generatedtable{tuning_summary}
@@ -340,7 +345,7 @@ out of the mean and counted. None of these occurs for the exported lists.
 
 \begin{table}[htbp]
   \centering
-  \caption{Validation on all 18 exported lists (9 models, validation and test split): largest absolute difference
+  \caption{Validation on all 22 exported lists (11 models, validation and test split): largest absolute difference
   between our value and RecBole's, either the value RecBole reported for the same checkpoint (rounded to 4 decimals)
   or RecBole's metric code applied to our lists. Entropy is the normalised exposure entropy.}
   \label{tab:metric-validation}

@@ -1,17 +1,26 @@
 """Build the main results table and figure for the report (Track A, Task 2.2 + appendix).
 
-Reads ``results/processed/recbole_metrics_{quick,tuned}.csv`` (written by run_models) and
-``results/processed/tuning_summary.csv`` (written by tune_models) and writes
+Every number for an exported list comes from OUR metrics (``project/metrics``, Task 2.1), never from
+RecBole's evaluator. Reads
 
-    report/tables/generated/model_results.tex      test metrics of the tuned models vs. baselines
+    results/processed/metrics_{valid,test}.csv     our metrics per list (python -m project.experiments.evaluate_models)
+    results/processed/tuning_summary.csv           grid-search summary (tune_models)
+    results/processed/recbole_metrics_quick.csv    untuned NDCG@10 as RecBole reported it during the quick run
+                                                   (those lists are overwritten by the tuned run; RecBole's NDCG
+                                                   equals ours to 4 decimals, see metric_validation.csv)
+
+and writes
+
+    report/tables/generated/model_results.tex      test metrics of the individual models vs. baselines
     report/tables/generated/tuning_summary.tex     search space size, best hyper-parameters, NDCG before/after tuning
     results/processed/model_results.csv            the same table as CSV (one row per model)
     figures/generated/model_comparison.pdf         NDCG@10 / Recall@10 / Precision@10 on test per model
 
-Usage (repository root)::
+Only individual models (the registry) are included; hybrids and re-rankers in the metric files are skipped.
 
-    python -m project.experiments.results_table            # tuned numbers (falls back to quick for untuned models)
-    python -m project.experiments.results_table --mode quick
+Usage (repository root, after evaluate_models)::
+
+    python -m project.experiments.results_table
 """
 from __future__ import annotations
 
@@ -42,16 +51,16 @@ def _load(mode: str) -> pd.DataFrame:
     return pd.read_csv(path) if path.exists() else pd.DataFrame()
 
 
-def collect(mode: str) -> pd.DataFrame:
-    """One row per model: test + valid metrics; untuned models (baselines) come from the quick run."""
-    tuned, quick = _load("tuned"), _load("quick")
-    src = tuned if mode == "tuned" else quick
-    if src.empty:
-        raise SystemExit(f"no results for mode={mode}; run `python -m project.experiments.run_models --mode {mode}`")
-    frames = [src]
-    if mode == "tuned" and not quick.empty:
-        frames.append(quick[~quick["model"].isin(src["model"])])  # baselines are not tuned
+def collect() -> pd.DataFrame:
+    """Our metrics of every exported individual-model list: one row per (model, split), registry order."""
+    frames = []
+    for split in ("valid", "test"):
+        path = RESULTS_PROCESSED_DIR / f"metrics_{split}.csv"
+        if not path.exists():
+            raise SystemExit(f"{path} not found -- run `python -m project.experiments.evaluate_models` first")
+        frames.append(pd.read_csv(path).assign(split=split).rename(columns={"name": "model"}))
     df = pd.concat(frames, ignore_index=True)
+    df = df[df["model"].isin(ORDER)].copy()
     df["order"] = df["model"].map({m: i for i, m in enumerate(ORDER)})
     return df.sort_values(["order", "split"]).drop(columns="order")
 
@@ -75,27 +84,28 @@ def _bold_best(out: pd.DataFrame, cols) -> pd.DataFrame:
 
 
 def tuning_table(df: pd.DataFrame) -> pd.DataFrame | None:
+    """Untuned NDCG@10 as RecBole reported it in the quick run; tuned NDCG@10 from our metrics."""
     path = RESULTS_PROCESSED_DIR / "tuning_summary.csv"
     quick = _load("quick")
     if not path.exists() or quick.empty:
         return None
     summary = pd.read_csv(path).set_index("model")
+    ours = df.set_index(["model", "split"])["ndcg@10"]
     rows = []
     for m in ORDER:
         if m not in summary.index:
             continue
         q_valid = quick[(quick.model == m) & (quick.split == "valid")]["ndcg@10"]
         q_test = quick[(quick.model == m) & (quick.split == "test")]["ndcg@10"]
-        t_test = df[(df.model == m) & (df.split == "test") & (df["mode"] == "tuned")]["ndcg@10"]
         params = json.loads(summary.loc[m, "best_params"])
         rows.append({
             "Model": m,
             "Configs": int(summary.loc[m, "n_trials"]),
             "Selected hyper-parameters": ", ".join(f"{k}={v}" for k, v in params.items()),
             "valid NDCG@10 untuned": float(q_valid.iloc[0]) if len(q_valid) else float("nan"),
-            "valid NDCG@10 tuned": float(summary.loc[m, "valid_ndcg@10_tuned"]),
+            "valid NDCG@10 tuned": float(ours.get((m, "valid"), float("nan"))),
             "test NDCG@10 untuned": float(q_test.iloc[0]) if len(q_test) else float("nan"),
-            "test NDCG@10 tuned": float(t_test.iloc[0]) if len(t_test) else float("nan"),
+            "test NDCG@10 tuned": float(ours.get((m, "test"), float("nan"))),
         })
     return pd.DataFrame(rows)
 
@@ -131,10 +141,9 @@ def comparison_figure(out: pd.DataFrame):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--mode", choices=["quick", "tuned"], default="tuned")
-    args = parser.parse_args()
+    parser.parse_args()
 
-    df = collect(args.mode)
+    df = collect()
     out = results_table(df)
     out.to_csv(RESULTS_PROCESSED_DIR / "model_results.csv", index=False)
     metric_cols = [PRETTY[m] for m in METRIC_COLUMNS] + ["valid NDCG@10"]

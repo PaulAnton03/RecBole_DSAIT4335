@@ -115,8 +115,8 @@ python -m project.experiments.export_split                      # 0. frozen spli
 python -m project.experiments.run_models --mode quick --models all   # 1. untuned scores + top-50 lists
 python -m project.experiments.tune_models                       # 2. grid search on validation NDCG@10
 python -m project.experiments.run_models --mode tuned           # 3. final (tuned) scores + lists
-python -m project.experiments.results_table                     # 4. report table + figure
-python -m project.experiments.evaluate_models                   # 5. our own metrics on every list (Track B)
+python -m project.experiments.evaluate_models                   # 4. our own metrics on every list (Track B)
+python -m project.experiments.results_table                     # 5. report table + figure (from our metrics)
 ```
 
 Every model, hybrid and re-ranker is scored with our own metrics (`project/metrics`, Task 2.1), never with
@@ -224,6 +224,8 @@ Then bring feature branches up to date with `git merge main`, and re-run the `pi
 
 ## 8. Known quirks (all from the lecturer's code, harmless unless noted)
 
+- **Not harmless:** RecBole's `Pop` counts training *batches* that contain an item, not interactions, so its
+  scores saturate and ties decide the list. We use `project/models/pop_exact.py` instead (see `project/models/README.md`).
 - `WARNING Could not save embeddings: BPR.forward() missing 2 required positional arguments` after each epoch.
 - `FutureWarning` about `torch.cuda.amp.GradScaler` (`trainer.py`).
 - `FutureWarning` about chained assignment in `dataset.py` (lines 648/650) — this is the `fillna(inplace=True)` that
