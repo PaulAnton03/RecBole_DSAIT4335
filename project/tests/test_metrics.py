@@ -124,8 +124,31 @@ def test_miscalibration_from_lists_and_history():
 def test_popularity_groups_by_interaction_share():
     counts = np.array([50, 30, 10, 5, 3, 2, 0])  # 100 interactions
     g = lookups.popularity_groups(counts, 0.2, 0.2)
-    # head: 50 alone holds >= 20 %; tail: items with <= 10 together hold exactly 20 %
-    np.testing.assert_array_equal(g, [lookups.HEAD, lookups.MID] + [lookups.TAIL] * 5)
+    # head: 50 alone holds >= 20 %; tail: items with <= 10 together hold exactly 20 %; never seen: unseen
+    np.testing.assert_array_equal(g, [lookups.HEAD, lookups.MID] + [lookups.TAIL] * 4 + [lookups.UNSEEN])
+
+
+def test_popularity_groups_keep_equal_counts_together():
+    g = lookups.popularity_groups(np.array([10, 10, 10, 10, 1]), 0.2, 0.2)
+    assert len(set(g[:4])) == 1  # four items with the same count cannot be split between groups
+
+
+def test_tertile_groups_keep_ties_together():
+    scores = pd.Series({"a": 1, "b": 2, "c": 2, "d": 2, "e": 5, "f": 9})
+    g = lookups.tertile_groups(scores, ("low", "medium", "high"))
+    assert g["b"] == g["c"] == g["d"]
+    assert g["a"] == "low" and g["f"] == "high"
+
+
+def test_user_groups_from_training_interactions():
+    catalogue = ["h", "m1", "m2", "t"]
+    item_groups = np.array([lookups.HEAD, lookups.MID, lookups.MID, lookups.TAIL])
+    train = {"u1": {"h"}, "u2": {"h", "m1"}, "u3": {"m1", "m2", "t"}}
+    shares = lookups.user_head_shares(train, item_groups, catalogue)
+    assert shares.to_dict() == {"u1": 1.0, "u2": 0.5, "u3": 0.0}
+    groups = lookups.user_groups(train, item_groups, catalogue)
+    assert groups.loc["u1", "taste"] == "mainstream" and groups.loc["u3", "taste"] == "niche"
+    assert groups.loc["u1", "activity"] == "low" and groups.loc["u3", "activity"] == "high"
 
 
 def test_upd_zero_for_same_mix_and_one_for_disjoint():
@@ -145,10 +168,19 @@ def test_average_popularity_and_tail_share():
 def test_gru_with_group_sizes():
     values = pd.Series({"u1": 0.2, "u2": 0.4, "u3": 0.9})
     groups = pd.Series({"u1": "a", "u2": "a", "u3": "b"})
-    out = fairness.group_recommendation_unfairness(values, groups, "a", "b")
-    assert out["gru"] == pytest.approx(0.6) and out["n_a"] == 2 and out["n_b"] == 1
-    equal = fairness.group_recommendation_unfairness(pd.Series({"u1": 0.3, "u3": 0.3}), groups, "a", "b")
+    out = fairness.group_recommendation_unfairness(values, groups, ["a", "b"])
+    assert out["gru"] == pytest.approx(0.6) and out["sizes"] == {"a": 2, "b": 1}  # slide 38, two groups
+    equal = fairness.group_recommendation_unfairness(pd.Series({"u1": 0.3, "u3": 0.3}), groups, ["a", "b"])
     assert equal["gru"] == 0.0
+
+
+def test_gru_three_groups_is_max_minus_min_and_undefined_with_one_group():
+    values = pd.Series({"u1": 0.1, "u2": 0.5, "u3": 0.3})
+    groups = pd.Series({"u1": "low", "u2": "medium", "u3": "high"})
+    assert fairness.group_recommendation_unfairness(values, groups)["gru"] == pytest.approx(0.4)
+    one = fairness.group_recommendation_unfairness(values, groups.replace({"medium": "low", "high": "low"}),
+                                                   ["low", "medium", "high"])
+    assert np.isnan(one["gru"]) and one["sizes"]["medium"] == 0  # undefined, not a perfect 0
 
 
 def test_exposure_includes_unrecommended_items():

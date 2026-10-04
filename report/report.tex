@@ -163,14 +163,14 @@ unregularised item--item solution overfits co-occurrence noise.
 All metrics are our own implementation (\texttt{project/metrics}); RecBole only produces the lists, so models,
 hybrids and re-ranked lists are scored by identical code. Each list is cut at $K{=}10$, scored per user and
 macro-averaged over the 943 users; catalogue-level metrics are computed once over all lists. Item popularity
-$c_i$ and user profiles come only from the known history (train, plus validation when testing), never from
-held-out data. \emph{Accuracy:} Precision, Recall, NDCG, MRR and MAP. \emph{Beyond accuracy}
+$c_i$, user profiles and all groups come only from the training split (identical for validation and test), never
+from held-out data. \emph{Accuracy:} Precision, Recall, NDCG, MRR and MAP. \emph{Beyond accuracy}
 (Table~\ref{tab:beyond-accuracy}; formulas and our choices in Table~\ref{tab:metric-definitions}): intra-list
 diversity (ILD, mean pairwise Jaccard distance between genre sets), catalogue coverage, novelty (mean
 self-information $-\log_2$ of a film's share of interactions), serendipity (relevant films that a most-popular
 list would not have shown), genre miscalibration MC$_{KL}$ between history and list, average popularity and
-long-tail share; for fairness, the user-side GRU (NDCG gap between the 20\% most active users and the rest) and
-popularity deviation UPD, and the item-side Gini index of exposure. Validation: on all 22 lists our accuracy
+long-tail share; for fairness, the user-side GRU (largest NDCG gap between the low-, medium- and high-activity
+users of Task~2.5) and popularity deviation UPD, and the item-side Gini index of exposure. Validation: on all 22 lists our accuracy
 metrics equal the values RecBole reported to its 4-decimal rounding, and coverage, Gini, entropy and AvgPop equal
 RecBole's own metric code applied to our lists (Table~\ref{tab:metric-validation}); the metrics RecBole lacks are
 pinned down by hand-computed tests, including the lecture's worked examples.
@@ -179,7 +179,7 @@ pinned down by hand-computed tests, including the lecture's worked examples.
   \centering
   \caption{Beyond-accuracy metrics on the test split (lists of 10; $\uparrow$/$\downarrow$: higher/lower is
   better). Nov.: novelty in bits; Ser.: serendipity; AvgPop: share of users who rated a recommended film; Tail:
-  share of long-tail films; GRU: NDCG@10 gap between active and inactive users; Cov.\ and Gini: catalogue
+  share of long-tail films; GRU: largest NDCG@10 gap between user-activity groups; Cov.\ and Gini: catalogue
   coverage and exposure inequality over all 1\,682 films.}
   \label{tab:beyond-accuracy}
   \small\setlength{\tabcolsep}{3pt}
@@ -188,14 +188,15 @@ pinned down by hand-computed tests, including the lecture's worked examples.
 
 \emph{Discussion.} The beyond-accuracy metrics separate the models by family more than accuracy does. The
 tuned embedding models (BPR, NeuMF, LightGCN) cover 32--37\% of the catalogue, recommend less popular films (AvgPop
-0.26) and follow each user's taste for popular or niche films best (UPD 0.13--0.14). The neighbourhood and
-item--item linear models cover only 17--23\% (AvgPop 0.27--0.30): they score a film by aggregating its
+0.23) and follow each user's taste for popular or niche films best (UPD 0.14). The neighbourhood and
+item--item linear models cover only 17--23\% (AvgPop 0.24--0.27): they score a film by aggregating its
 co-occurrence with the user's films or neighbours, which favours films that co-occur with many others. EASE and
 SLIM are the best calibrated (MC$_{KL}$ 0.69 and 0.66; all others $\geq0.74$), as they reconstruct each user's
 history from item--item weights, so the recommended films resemble the user's own. Two properties of the metrics
 matter for Task~3: genre ILD barely varies (Random's 0.82 equals the mean distance of two random films, since
-65\% of film pairs share no genre), and GRU partly reflects the protocol: active users hold 27 held-out films on
-average against 6, so even Random gives them 3.6 times the NDCG of inactive users.
+65\% of film pairs share no genre), and GRU largely reflects the protocol: high-activity users hold 22 held-out films
+on average against 2.5 for low-activity users, so even Random gives them four times the NDCG
+(Section~\ref{sec:task2-groups}).
 
 \subsection{Comparison with the baselines (Task 2.2)}\owner{A}
 \label{sec:task2-baselines}
@@ -228,7 +229,40 @@ thus inherit much of Pop's popularity bias, which Tasks~2.5 and~3 examine.
 \TODO{D: overlap between the models' lists; what an oracle best-model-per-user would score.}
 
 \subsection{User and item groups (Task 2.5)}\owner{B}
-\TODO{B: accuracy and beyond-accuracy per user group (activity, popularity taste) and item group (head/mid/tail).}
+\label{sec:task2-groups}
+Groups are built from the training split only and frozen for all models
+(Table~\ref{tab:group-definitions}). Users are split twice, into tertiles: by \emph{activity} (number of training
+interactions: low $\leq34$, medium $\leq92$, high) and by \emph{taste}, the share of head films in their training
+interactions (niche $\leq19\%$, mixed $\leq29\%$, mainstream), the fairness lecture's users of unpopular, both, or
+popular items. Films are head, mid or tail (20/60/20\% of the training interactions); 27 films without a training
+interaction are kept apart. Metrics are computed on each complete list and averaged per group with 95\% bootstrap
+intervals; two models are compared on the same users with paired bootstraps, on validation and test; item groups use the micro recall of
+their held-out pairs and their share of recommendation slots (Tables~\ref{tab:user-groups} and~\ref{tab:item-groups}).
+
+\begin{figure}[htbp]
+  \centering
+  \generatedfigure[width=\linewidth]{user_group_analysis}
+  \caption{Test-set accuracy per group: dots are group means, whiskers 95\% bootstrap intervals, the grey line the
+  spread between groups. (d) Recall of held-out films by popularity group (support: 1\,863 head, 5\,696 mid and
+  2\,016 tail pairs).}
+  \label{fig:user-groups}
+\end{figure}
+
+\emph{Discussion.} Raw group gaps mostly reflect the protocol: high-activity users hold 22 held-out films against
+2.5 for low-activity ones, so NDCG@10 is highest and (except for Random) Recall@10 lowest for high-activity users
+(Figure~\ref{fig:user-groups}a,b); niche users (18 held-out films) and mainstream users (4) show the same reversal.
+We therefore compare models within groups and keep only differences that hold on both validation and test.
+EASE's lead over the embedding models is clear for high-activity users (paired NDCG $+0.03$ to $+0.05$ over
+LightGCN and BPR on both splits) but vanishes for low-activity users on validation: with few interactions no model
+is reliably better, so switching models by activity has little to exploit (Task~2.6). On the item side, the 58
+head films take 47--62\% of the tuned models' slots, while tail films, 21\% of the held-out pairs, are almost
+never retrieved (recall $\leq0.021$). The embedding models expose and retrieve about ten times more tail films
+than EASE, whereas Random fills 70\% of its slots with tail films and still retrieves fewer: exposure alone is not
+success. Niche users are served worst in their taste: EASE and UserKNN give them 50--57\% head films against
+15\% in their profiles (UPD 0.22--0.26 vs.\ 0.14--0.15 for mainstream users;
+Figure~\ref{fig:popularity-alignment}), while BPR and LightGCN keep UPD at 0.13--0.15 in every taste group.
+
+\TODO{B: add the hybrids once C and D export their lists (re-run \texttt{group\_analysis} with \texttt{--figure-names}).}
 
 \subsection{Insights (Task 2.6)}\owner{C}
 \TODO{C: group-specific hybrid motivated by 2.5.}
@@ -301,17 +335,18 @@ extended. All numbers are single runs with seed 2020; a 3-seed variance check is
 Table~\ref{tab:metric-definitions} lists every metric of \texttt{project/metrics} (formulas, edge cases and usage
 in \texttt{project/metrics/README.md}). Per-user values are macro-averaged over the evaluated users (every user
 with at least one held-out item: all 943); coverage and Gini are computed once over all lists, never per batch.
-\emph{Popularity groups} (item groups of Task~2.5): films sorted by $c_i$; the head holds the most popular films
-that together account for 20\% of the known interactions (58 films, $c_i\geq242$ on test), the tail the least
-popular films that together account for 20\% (1\,146 films, $c_i\leq54$, including unseen ones), the mid the
-remaining 478. \emph{Edge cases:} a list with a duplicate, an unknown film or a film from the user's history is
+\emph{Groups} (the groups of Task~2.5, Table~\ref{tab:group-definitions}) are built from the training split:
+films sorted by $c_i$, the head holds the most popular films that together account for 20\% of the training
+interactions (58 films, $c_i\geq216$), the tail the least popular films that together account for 20\% (1\,118
+films, $1\leq c_i\leq48$), the mid the remaining 479; the 27 films without a training interaction form a
+separate unseen group (long tail for TailShare). \emph{Edge cases:} a list with a duplicate, an unknown film or a film from the user's history is
 rejected; a missing list counts as empty (accuracy 0); undefined values (ILD of fewer than two films) are left
 out of the mean and counted. None of these occurs for the exported lists.
 
 \begin{table}[htbp]
   \centering
-  \caption{Our metrics ($K{=}10$; $L_u$: list, $T_u$: held-out relevant films, $H_u$: known history, $c_i$:
-  known interactions of film $i$, $I$: the 1\,682 films). ``Choice'' marks a convention the lectures leave open.}
+  \caption{Our metrics ($K{=}10$; $L_u$: list, $T_u$: held-out relevant films, $H_u$: training interactions of user
+  $u$, $c_i$: training interactions of film $i$, $I$: the 1\,682 films). ``Choice'' marks a convention the lectures leave open.}
   \label{tab:metric-definitions}
   \small\setlength{\tabcolsep}{4pt}
   \begin{tabular}{@{}p{2.3cm}p{9.1cm}p{4.3cm}@{}}
@@ -325,12 +360,12 @@ out of the mean and counted. None of these occurs for the exported lists.
     ILD & mean of $d(i,j)=1-|G_i\cap G_j|/|G_i\cup G_j|$ over all film pairs of $L_u$ ($G_i$: genres) & Diversity; Jaccard on genres \\
     Coverage & $|\bigcup_u L_u|/|I|$ (global) & Diversity; Fairness \\
     Novelty & mean over $L_u$ of $-\log_2\bigl(c_i/\sum_j c_j\bigr)$, unseen films counted as $c_i{=}1$ & Diversity \\
-    Serendipity & $|\{i\in L_u\cap T_u:\ i\notin \mathrm{Pop}_u\}|/K$, $\mathrm{Pop}_u$: the $K$ most popular films outside $H_u$ & Diversity; formula \\
+    Serendipity & $|\{i\in L_u\cap T_u:\ i\notin \mathrm{Pop}_u\}|/K$, $\mathrm{Pop}_u$: the $K$ most popular films the user has not interacted with & Diversity; formula \\
     MC$_{KL}$ & $\sum_g p(g|u)\ln\frac{p(g|u)}{(1-\alpha)\,q(g|u)+\alpha\, p(g|u)}$, $\alpha{=}0.01$; $p$ from $H_u$, $q$ from $L_u$, a film's $m$ genres weighted $1/m$ & Calibration; uniform weights \\
     AvgPop & mean over $L_u$ of $c_i/|U|$ (share of users who rated the film) & popularity bias \\
-    TailShare & share of $L_u$ in the tail group & groups (above) \\
-    UPD & $\mathrm{JSD}\bigl(P(H_u),P(L_u)\bigr)$, $P$: shares of head/mid/tail films, log base 2 & Fairness; $P$ and JSD \\
-    GRU & $\bigl|\overline{\mathrm{NDCG}}_{\text{inactive}}-\overline{\mathrm{NDCG}}_{\text{active}}\bigr|$, active: the 20\% of users with the largest $|H_u|$ & Fairness; groups \\
+    TailShare & share of $L_u$ in the tail or unseen group & groups (above) \\
+    UPD & $\mathrm{JSD}\bigl(P(H_u),P(L_u)\bigr)$, $P$: shares of head/mid/tail/unseen films, log base 2 & Fairness; $P$ and JSD \\
+    GRU & $\max_g\overline{\mathrm{NDCG}}_g-\min_g\overline{\mathrm{NDCG}}_g$ over the low/medium/high activity groups (for two groups the lecture's $|\overline{\mathrm{NDCG}}_{1}-\overline{\mathrm{NDCG}}_{2}|$) & Fairness; groups, max$-$min \\
     Gini & $\sum_j(2j-n-1)\,e_{(j)}/(n\sum_j e_j)$, $e_i$: number of lists containing film $i$, all $n{=}|I|$ films (global) & Fairness \\
     \bottomrule
   \end{tabular}\\[2pt]
@@ -347,6 +382,50 @@ out of the mean and counted. None of these occurs for the exported lists.
   \small
   \generatedtable{metric_validation}
 \end{table}
+
+\subsection{User and item groups (Task 2.5)}
+\label{app:groups}
+Activity and taste are related (Pearson $r=-0.53$ between training interactions and head share): 62\% of the
+niche users are highly active, so the taste and activity effects in Figure~\ref{fig:user-groups} are partly
+the same users. The activity $\times$ taste cells, the per-group values of every metric with their intervals and the
+paired differences between every two models are in \texttt{results/processed/user\_group\_*\_test.csv}; the
+validation-split versions are the ones to use for design decisions (Task~2.6).
+
+\begin{table}[htbp]
+  \centering
+  \caption{Groups of Task~2.5 (training split only; tertile cuts are value thresholds, so equal values share a group).}
+  \label{tab:group-definitions}
+  \small
+  \generatedtable{group_definitions}
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Test-set metrics per user group (means over the group's users). UPD: popularity deviation between a
+  user's training interactions and list (lower is better).}
+  \label{tab:user-groups}
+  \small\setlength{\tabcolsep}{2.5pt}
+  \generatedtable{user_group_results}
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Test-set recall of the held-out films of each popularity group (micro: all held-out pairs of the group
+  count once; support 1\,863 head, 5\,696 mid, 2\,016 tail pairs) and share of all recommendation slots. The 21
+  held-out pairs on unseen films are retrieved by no model; only Random recommends unseen films (1.7\% of slots).}
+  \label{tab:item-groups}
+  \small\setlength{\tabcolsep}{4pt}
+  \generatedtable{item_group_results}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \generatedfigure[width=\linewidth]{popularity_alignment}
+  \caption{Popularity mix of the users' training interactions (top bar) and of each model's test lists, per taste
+  group: every personalised model recommends more head films than the profiles contain, relative to the profile
+  most of all for niche users; the embedding models stay closest to the profiles.}
+  \label{fig:popularity-alignment}
+\end{figure}
 
 \TODO{B, C, D: full per-group tables, extra metrics, alternative relevance rule.}
 
