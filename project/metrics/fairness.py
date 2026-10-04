@@ -4,9 +4,10 @@ User side -- Group Recommendation Unfairness (slide 38, Fu et al. SIGIR 2020):
 
     GRU(G1, G2) = | mean_{u in G1} F(u) - mean_{u in G2} F(u) |
 
-with F a per-user quality metric (we use NDCG@K, the slide's example). Lower = smaller quality
-gap; always reported with both group means and sizes, since a small gap alone does not mean
-good quality.
+with F a per-user quality metric (we use NDCG@K, the slide's example). For more than two groups
+we use the max-min extension, max_g mean_g F - min_g mean_g F (equal to the slide's GRU for two
+groups). Lower = smaller quality gap; always reported with every group's mean and size, since a
+small gap alone does not mean good quality (it can come from lowering the best-served group).
 
 Item side -- equality of exposure (slide 42: "Gini index or entropy ... measure the flatness"):
 the exposure of item i is e_i = number of evaluated lists that contain it, over the WHOLE
@@ -24,7 +25,7 @@ exposure an item of group G_k receives per list, (1 / |G_k|) sum_{i in G_k} sum_
 """
 from __future__ import annotations
 
-from typing import Dict
+from typing import Dict, Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -32,14 +33,21 @@ import pandas as pd
 from project.metrics.accuracy import discounts
 
 
-def group_recommendation_unfairness(values: pd.Series, groups: pd.Series, g1: str, g2: str) -> Dict[str, float]:
-    """GRU between groups ``g1`` and ``g2`` of a per-user metric (users missing in ``groups`` are ignored)."""
+def group_recommendation_unfairness(values: pd.Series, groups: pd.Series,
+                                    group_names: Optional[Sequence[str]] = None) -> Dict[str, object]:
+    """GRU (max - min of the group means) of a per-user metric, with every group's mean and size.
+
+    ``group_names`` fixes which groups are reported (default: all groups found); empty groups get a
+    NaN mean and are left out of the gap, which is NaN with fewer than two non-empty groups. Users
+    missing in ``groups`` are ignored.
+    """
     df = pd.DataFrame({"value": values, "group": groups.reindex(values.index)}).dropna()
-    a, b = df.loc[df.group == g1, "value"], df.loc[df.group == g2, "value"]
-    if len(a) == 0 or len(b) == 0:
-        raise ValueError(f"GRU needs users in both groups ({g1}: {len(a)}, {g2}: {len(b)})")
-    return {"gru": abs(a.mean() - b.mean()), f"mean_{g1}": a.mean(), f"mean_{g2}": b.mean(),
-            f"n_{g1}": int(len(a)), f"n_{g2}": int(len(b))}
+    names = list(group_names) if group_names is not None else sorted(df["group"].unique())
+    means = {g: df.loc[df.group == g, "value"].mean() for g in names}  # NaN for an empty group
+    sizes = {g: int((df.group == g).sum()) for g in names}
+    present = [means[g] for g in names if sizes[g] > 0]
+    gru = max(present) - min(present) if len(present) >= 2 else float("nan")  # undefined, not 0
+    return {"gru": gru, "means": means, "sizes": sizes}
 
 
 def item_exposure(idx: np.ndarray, n_items: int, position_discount: bool = False) -> np.ndarray:

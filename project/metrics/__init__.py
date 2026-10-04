@@ -10,7 +10,8 @@ and convention. The building blocks are importable on their own, e.g. for the re
     calibration   genre miscalibration KL(p || q~)
     popularity    average popularity, long-tail share, user popularity deviation (UPD)
     fairness      GRU, item exposure, Gini, entropy, group exposure
-    lookups       genres, popularity, head/mid/tail item groups, user activity groups
+    item_groups   recall and exposure per item popularity group (Task 2.5)
+    lookups       genres, popularity, head/mid/tail/unseen item groups, user activity and taste groups
 """
 from project.metrics.evaluate import (METRIC_INFO, EvaluationContext, EvaluationResult, evaluate,
                                       evaluate_saved)

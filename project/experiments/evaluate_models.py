@@ -74,7 +74,7 @@ def recbole_metric_code(idx: np.ndarray, ctx: EvaluationContext, k: int) -> dict
         f"gini@{k}": gini.get_gini(full, ctx.n_items),
         # RecBole divides the entropy by the number of distinct recommended items; we normalise by ln |I|
         f"entropy@{k}": ent.get_entropy(full) * len(np.unique(full)) / np.log(ctx.n_items),
-        f"avgpop@{k}": avg_count / ctx.n_history_users,
+        f"avgpop@{k}": avg_count / ctx.n_train_users,
     }
 
 

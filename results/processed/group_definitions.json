@@ -1,0 +1,74 @@
+{
+  "items": [
+    {
+      "group": "head",
+      "items": 58,
+      "interaction_share": 0.20136620136620137,
+      "min_count": 216,
+      "max_count": 476
+    },
+    {
+      "group": "mid",
+      "items": 479,
+      "interaction_share": 0.6019206019206019,
+      "min_count": 49,
+      "max_count": 215
+    },
+    {
+      "group": "tail",
+      "items": 1118,
+      "interaction_share": 0.1967131967131967,
+      "min_count": 1,
+      "max_count": 48
+    },
+    {
+      "group": "unseen",
+      "items": 27,
+      "interaction_share": 0.0,
+      "min_count": 0,
+      "max_count": 0
+    }
+  ],
+  "users": {
+    "activity": [
+      {
+        "group": "low",
+        "users": 321,
+        "min_score": 16.0,
+        "max_score": 34.0
+      },
+      {
+        "group": "medium",
+        "users": 308,
+        "min_score": 35.0,
+        "max_score": 92.0
+      },
+      {
+        "group": "high",
+        "users": 314,
+        "min_score": 93.0,
+        "max_score": 591.0
+      }
+    ],
+    "taste": [
+      {
+        "group": "niche",
+        "users": 314,
+        "min_score": 0.0,
+        "max_score": 0.19444444444444445
+      },
+      {
+        "group": "mixed",
+        "users": 318,
+        "min_score": 0.1951219512195122,
+        "max_score": 0.29411764705882354
+      },
+      {
+        "group": "mainstream",
+        "users": 311,
+        "min_score": 0.29508196721311475,
+        "max_score": 0.7058823529411765
+      }
+    ]
+  }
+}

@@ -3,7 +3,7 @@
     from project.metrics import EvaluationContext, evaluate
     from project.utils.data_formats import load_recommendations
 
-    ctx = EvaluationContext.for_split("test")      # ground truth, history, genres, popularity, groups
+    ctx = EvaluationContext.for_split("test")      # ground truth, masked history, training data, genres, groups
     res = evaluate(load_recommendations("EASE", "test"), ctx)   # final list = rank <= 10
     res.summary         # pd.Series: every metric (macro-average over users, or global) + user counts
     res.per_user        # pd.DataFrame indexed by user_id: per-user values (group analyses, GRU, tests)
@@ -21,6 +21,8 @@ only produced the lists. Evaluation contract (see project/metrics/README.md):
 * per-user metrics are macro-averaged; coverage, Gini, entropy and group exposure are computed
   once over all evaluated lists. Undefined per-user values (e.g. ILD of a 1-item list) are NaN,
   left out of the mean, and counted in ``users_short_list`` / ``users_missing_list``.
+* item popularity, the item / user groups and the users' genre and popularity profiles come from
+  the training split only (frozen across models and splits, see ``lookups``).
 """
 from __future__ import annotations
 
@@ -43,7 +45,6 @@ METRIC_INFO = {
     "miscalibration": ("MC$_{KL}$", False), "upd": ("UPD", False), "gru_ndcg": ("GRU", False),
     "gini": ("Gini", False), "entropy": ("Entropy", True),
 }
-GRU_GROUPS = ("inactive", "active")
 
 
 @dataclass(frozen=True)
@@ -54,13 +55,14 @@ class EvaluationContext:
     users: np.ndarray  # (U,) evaluated user ids
     catalogue: np.ndarray  # (I,) item ids
     relevant: np.ndarray  # (U, I) bool, held-out relevant items T_u
-    history: np.ndarray  # (U, I) bool, known items H_u (masked from the lists)
+    history: np.ndarray  # (U, I) bool, items masked from the lists (train; + valid when testing)
+    train: np.ndarray  # (U, I) bool, training interactions: the users' profiles for calibration / UPD
     genres: np.ndarray  # (I, G) bool multi-hot genres
     genre_names: list
-    counts: np.ndarray  # (I,) known interactions per item (all users' histories)
-    n_history_users: int
-    item_groups: np.ndarray  # (I,) lookups.HEAD / MID / TAIL
-    user_groups: pd.Series  # user_id -> "active" / "inactive"
+    counts: np.ndarray  # (I,) training interactions per item c_i (all users)
+    n_train_users: int
+    item_groups: np.ndarray  # (I,) lookups.HEAD / MID / TAIL / UNSEEN
+    user_groups: pd.DataFrame  # index user_id; columns activity (low/medium/high), taste (niche/mixed/mainstream)
     min_rating: Optional[float] = None
     users_without_relevant: int = 0  # users with history but no relevant held-out item (not evaluated)
     _cache: dict = field(default_factory=dict, repr=False, compare=False)
@@ -82,7 +84,8 @@ class EvaluationContext:
         return self._cache["p_gi"]
 
     def popularity_lists(self, k: int) -> np.ndarray:
-        """(U, k) the popularity baseline's list per user (serendipity's 'expected' items)."""
+        """(U, k) the popularity baseline's list per user (serendipity's 'expected' items): the k items
+        with the most training interactions that are not masked for the user."""
         key = ("pop", k)
         if key not in self._cache:
             hist = [np.flatnonzero(row) for row in self.history]
@@ -92,10 +95,12 @@ class EvaluationContext:
     @classmethod
     def build(cls, ground_truth: Mapping[str, Set[str]], history: Mapping[str, Set[str]],
               item_genres: Mapping[str, Sequence[str]], catalogue: Optional[Sequence[str]] = None,
-              split: str = "custom", min_rating: Optional[float] = None,
-              head_share: float = lookups.HEAD_SHARE, tail_share: float = lookups.TAIL_SHARE,
-              active_fraction: float = lookups.ACTIVE_FRACTION) -> "EvaluationContext":
-        """Context from plain dicts (used by ``for_split`` and by the unit tests)."""
+              train: Optional[Mapping[str, Set[str]]] = None, split: str = "custom",
+              min_rating: Optional[float] = None, head_share: float = lookups.HEAD_SHARE,
+              tail_share: float = lookups.TAIL_SHARE) -> "EvaluationContext":
+        """Context from plain dicts (used by ``for_split`` and by the unit tests). ``history`` is what
+        is masked from the lists; ``train`` (default: ``history``) is what profiles and groups use."""
+        train = history if train is None else train
         catalogue = np.asarray(list(item_genres) if catalogue is None else catalogue, dtype=str)
         pos = {item: i for i, item in enumerate(catalogue)}
         unknown = {i for items in list(ground_truth.values()) + list(history.values()) for i in items} - set(pos)
@@ -103,18 +108,21 @@ class EvaluationContext:
             raise ValueError(f"{len(unknown)} items are not in the catalogue, e.g. {sorted(unknown)[:5]}")
         users = np.array(sorted(u for u, items in ground_truth.items() if items), dtype=str)
         relevant = np.zeros((len(users), len(catalogue)), dtype=bool)
-        hist = np.zeros_like(relevant)
+        hist, train_m = np.zeros_like(relevant), np.zeros_like(relevant)
         for r, u in enumerate(users):
             relevant[r, [pos[i] for i in ground_truth[u]]] = True
             hist[r, [pos[i] for i in history.get(u, ())]] = True
+            train_m[r, [pos[i] for i in train.get(u, ())]] = True
         if (relevant & hist).any():
             raise ValueError("held-out relevant items overlap the history -- ground truth and history do not match")
-        counts = lookups.item_counts(history, catalogue)
+        if (train_m & ~hist).any():
+            raise ValueError("training interactions must be part of the masked history")
+        counts = lookups.item_counts(train, catalogue)
+        item_groups = lookups.popularity_groups(counts, head_share, tail_share)
         genres, genre_names = lookups.genre_matrix(item_genres, catalogue)
-        return cls(split=split, users=users, catalogue=catalogue, relevant=relevant, history=hist,
-                   genres=genres, genre_names=genre_names, counts=counts, n_history_users=len(history),
-                   item_groups=lookups.popularity_groups(counts, head_share, tail_share),
-                   user_groups=lookups.user_activity_groups(history, active_fraction),
+        return cls(split=split, users=users, catalogue=catalogue, relevant=relevant, history=hist, train=train_m,
+                   genres=genres, genre_names=genre_names, counts=counts, n_train_users=len(train),
+                   item_groups=item_groups, user_groups=lookups.user_groups(train, item_groups, catalogue),
                    min_rating=min_rating,
                    users_without_relevant=len(set(history) | set(ground_truth)) - len(users))
 
@@ -133,8 +141,9 @@ def _context_for_split(split: str, min_rating: Optional[float]) -> EvaluationCon
     if min_rating is not None:
         held_out = held_out[held_out["rating"] >= min_rating]
     ground_truth = {u: set(items) for u, items in held_out.groupby("user_id")["item_id"]}
+    train = {u: set(items) for u, items in load_split("train").groupby("user_id")["item_id"]}
     return EvaluationContext.build(ground_truth, load_history(split), lookups.load_item_genres(),
-                                   lookups.load_catalogue(), split=split, min_rating=min_rating)
+                                   lookups.load_catalogue(), train=train, split=split, min_rating=min_rating)
 
 
 @dataclass
@@ -196,17 +205,18 @@ def evaluate(recs: pd.DataFrame, ctx: EvaluationContext, k: int = TOPK_FINAL, na
         "ild" + at: diversity.intra_list_diversity(idx, ctx.genres),
         "novelty" + at: novelty.novelty(idx, ctx.counts),
         "serendipity" + at: novelty.serendipity(hits, idx, ctx.popularity_lists(k)),
-        "avgpop" + at: popularity.average_popularity(idx, ctx.counts, ctx.n_history_users),
-        "tailshare" + at: popularity.group_share(idx, ctx.item_groups, lookups.TAIL),
-        "miscalibration" + at: calibration.miscalibration(idx, ctx.history, ctx.p_gi),
-        "upd" + at: popularity.user_popularity_deviation(idx, ctx.history, ctx.item_groups),
+        "avgpop" + at: popularity.average_popularity(idx, ctx.counts, ctx.n_train_users),
+        "tailshare" + at: popularity.group_share(idx, ctx.item_groups, [lookups.TAIL, lookups.UNSEEN]),
+        "miscalibration" + at: calibration.miscalibration(idx, ctx.train, ctx.p_gi),
+        "upd" + at: popularity.user_popularity_deviation(idx, ctx.train, ctx.item_groups,
+                                                         len(lookups.POPULARITY_GROUPS)),
         "list_length": filled.sum(axis=1),
         "n_relevant": n_rel,
     }, index=pd.Index(ctx.users, name="user_id"))
-    per_user["activity"] = ctx.user_groups.reindex(per_user.index).values
+    per_user[["activity", "taste"]] = ctx.user_groups.reindex(per_user.index)[["activity", "taste"]].values
 
     exposure = fairness.item_exposure(idx, ctx.n_items)
-    gru = fairness.group_recommendation_unfairness(per_user["ndcg" + at], per_user["activity"], *GRU_GROUPS)
+    gru = fairness.group_recommendation_unfairness(per_user["ndcg" + at], per_user["activity"], lookups.ACTIVITY_GROUPS)
     group_exp = fairness.group_exposure(idx, ctx.item_groups, len(lookups.POPULARITY_GROUPS))
 
     summary = {"name": name, "split": ctx.split, "k": k}
@@ -216,8 +226,8 @@ def evaluate(recs: pd.DataFrame, ctx: EvaluationContext, k: int = TOPK_FINAL, na
         "gini" + at: fairness.gini_index(exposure),
         "entropy" + at: fairness.shannon_entropy(exposure, normalised=True),
         "gru_ndcg" + at: gru["gru"],
-        **{f"ndcg{at}_{g}": gru[f"mean_{g}"] for g in GRU_GROUPS},
-        **{f"users_{g}": gru[f"n_{g}"] for g in GRU_GROUPS},
+        **{f"ndcg{at}_activity_{g}": v for g, v in gru["means"].items()},
+        **{f"users_activity_{g}": v for g, v in gru["sizes"].items()},
         **{f"exposure_{g}" + at: v for g, v in zip(lookups.POPULARITY_GROUPS, group_exp)},
         "users": len(idx),
         "users_missing_list": int((~filled.any(axis=1)).sum()),
