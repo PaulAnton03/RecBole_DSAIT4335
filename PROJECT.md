@@ -31,7 +31,7 @@ updates never conflicts with our documentation. **This file is the group guide.*
 │   ├── configs/                   #   our RecBole/experiment YAML configs (base.yaml = shared protocol, hyper/, models/)
 │   ├── models/                    #   Track A: individual models -- train, tune, export (see project/models/README.md)
 │   ├── hybrids/                   #   Task 1: hybrid recommenders
-│   ├── metrics/                   #   Task 2: accuracy + beyond-accuracy metrics
+│   ├── metrics/                   #   Task 2.1: accuracy + beyond-accuracy metrics (see project/metrics/README.md)
 │   ├── rerankers/                 #   Task 3: diversity / calibration / fairness rerankers
 │   ├── analysis/                  #   coefficient, user-group, item-group analyses
 │   ├── experiments/               #   runnable entry points: python -m project.experiments.<name>
@@ -116,7 +116,11 @@ python -m project.experiments.run_models --mode quick --models all   # 1. untune
 python -m project.experiments.tune_models                       # 2. grid search on validation NDCG@10
 python -m project.experiments.run_models --mode tuned           # 3. final (tuned) scores + lists
 python -m project.experiments.results_table                     # 4. report table + figure
+python -m project.experiments.evaluate_models                   # 5. our own metrics on every list (Track B)
 ```
+
+Every model, hybrid and re-ranker is scored with our own metrics (`project/metrics`, Task 2.1), never with
+RecBole's evaluator; see [`project/metrics/README.md`](project/metrics/README.md) for the formulas and conventions.
 
 ### Evaluating separately (assignment: "perform the evaluation separately")
 
@@ -163,7 +167,8 @@ save_latex_table(df, "model_results")    # -> report/tables/generated/model_resu
 ```
 
 Agreed file names (the report already references them): `model_comparison`, `hybrid_coefficients`,
-`user_group_analysis` (figures) and `model_results`, `tuning_summary`, `reranker_results` (tables). Add new ones with a fixed,
+`user_group_analysis` (figures) and `model_results`, `tuning_summary`, `beyond_accuracy_results`, `metric_validation`,
+`reranker_results` (tables). Add new ones with a fixed,
 descriptive `snake_case` name — never put a date, run id or seed in the name; overwrite in place. Commit a generated
 file together with the code change that produced it. Generated tables contain only the `tabular`; the caption and
 label live in `report/report.tex`.

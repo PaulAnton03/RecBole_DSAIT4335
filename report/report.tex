@@ -159,7 +159,43 @@ unregularised item--item solution overfits co-occurrence noise.
 \label{sec:task2}
 
 \subsection{Evaluation metrics (Task 2.1)}\owner{B}
-\TODO{B: accuracy and beyond-accuracy metrics as implemented in \texttt{project/metrics} (validated against RecBole on the Track A lists).}
+\label{sec:task2-metrics}
+All metrics are our own implementation (\texttt{project/metrics}); RecBole only produces the lists, so models,
+hybrids and re-ranked lists are scored by identical code. Each list is cut at $K{=}10$, scored per user and
+macro-averaged over the 943 users; catalogue-level metrics are computed once over all lists. Item popularity
+$c_i$ and user profiles come only from the known history (train, plus validation when testing), never from
+held-out data. \emph{Accuracy:} Precision, Recall, NDCG, MRR and MAP. \emph{Beyond accuracy}
+(Table~\ref{tab:beyond-accuracy}; formulas and our choices in Table~\ref{tab:metric-definitions}): intra-list
+diversity (ILD, mean pairwise Jaccard distance between genre sets), catalogue coverage, novelty (mean
+self-information $-\log_2$ of a film's share of interactions), serendipity (relevant films that a most-popular
+list would not have shown), genre miscalibration MC$_{KL}$ between history and list, average popularity and
+long-tail share; for fairness, the user-side GRU (NDCG gap between the 20\% most active users and the rest) and
+popularity deviation UPD, and the item-side Gini index of exposure. Validation: on all 18 lists our accuracy
+metrics equal the values RecBole reported to its 4-decimal rounding, and coverage, Gini, entropy and AvgPop equal
+RecBole's own metric code applied to our lists (Table~\ref{tab:metric-validation}); the metrics RecBole lacks are
+pinned down by hand-computed tests, including the lecture's worked examples.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Beyond-accuracy metrics on the test split (lists of 10; $\uparrow$/$\downarrow$: higher/lower is
+  better). Nov.: novelty in bits; Ser.: serendipity; AvgPop: share of users who rated a recommended film; Tail:
+  share of long-tail films; GRU: NDCG@10 gap between active and inactive users; Cov.\ and Gini: catalogue
+  coverage and exposure inequality over all 1\,682 films.}
+  \label{tab:beyond-accuracy}
+  \small\setlength{\tabcolsep}{3pt}
+  \generatedtable{beyond_accuracy_results}
+\end{table}
+
+\emph{Discussion.} The beyond-accuracy metrics separate the models by family more than accuracy does. The
+embedding models (BPR, NeuMF, LightGCN) cover 33--37\% of the catalogue, recommend less popular films (AvgPop
+0.26) and follow each user's taste for popular or niche films best (UPD 0.13--0.14). The neighbourhood and
+item--item linear models cover only 17--23\% (AvgPop 0.27--0.30): they score a film by aggregating its
+co-occurrence with the user's films or neighbours, which favours films that co-occur with many others. EASE and
+SLIM are the best calibrated (MC$_{KL}$ 0.69 and 0.66; all others $\geq0.74$), as they reconstruct each user's
+history from item--item weights, so the recommended films resemble the user's own. Two properties of the metrics
+matter for Task~3: genre ILD barely varies (Random's 0.82 equals the mean distance of two random films, since
+65\% of film pairs share no genre), and GRU partly reflects the protocol: active users hold 27 held-out films on
+average against 6, so even Random gives them 3.6 times the NDCG of inactive users.
 
 \subsection{Comparison with the baselines (Task 2.2)}\owner{A}
 \label{sec:task2-baselines}
@@ -259,6 +295,59 @@ extended. All numbers are single runs with seed 2020; a 3-seed variance check is
 \end{figure}
 
 \section{Additional results for Task 2}
+\label{app:task2}
+\subsection{Metric definitions, conventions and validation (Task 2.1)}
+\label{app:metrics}
+Table~\ref{tab:metric-definitions} lists every metric of \texttt{project/metrics} (formulas, edge cases and usage
+in \texttt{project/metrics/README.md}). Per-user values are macro-averaged over the evaluated users (every user
+with at least one held-out item: all 943); coverage and Gini are computed once over all lists, never per batch.
+\emph{Popularity groups} (item groups of Task~2.5): films sorted by $c_i$; the head holds the most popular films
+that together account for 20\% of the known interactions (58 films, $c_i\geq242$ on test), the tail the least
+popular films that together account for 20\% (1\,146 films, $c_i\leq54$, including unseen ones), the mid the
+remaining 478. \emph{Edge cases:} a list with a duplicate, an unknown film or a film from the user's history is
+rejected; a missing list counts as empty (accuracy 0); undefined values (ILD of fewer than two films) are left
+out of the mean and counted. None of these occurs for the exported lists.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Our metrics ($K{=}10$; $L_u$: list, $T_u$: held-out relevant films, $H_u$: known history, $c_i$:
+  known interactions of film $i$, $I$: the 1\,682 films). ``Choice'' marks a convention the lectures leave open.}
+  \label{tab:metric-definitions}
+  \small\setlength{\tabcolsep}{4pt}
+  \begin{tabular}{@{}p{2.3cm}p{9.1cm}p{4.3cm}@{}}
+    \toprule
+    Metric & Definition & Lecture; our choice \\
+    \midrule
+    Precision, Recall & $|L_u\cap T_u|/K$;\; $|L_u\cap T_u|/|T_u|$ & Evaluation 1 \\
+    NDCG & $\sum_{r\leq K}\mathrm{rel}_r/\log_2(r{+}1)$, divided by its ideal value with $\min(K,|T_u|)$ hits & Evaluation 2 \\
+    MRR & $1/$rank of the first relevant film, 0 if none & Evaluation 2 \\
+    MAP & $\sum_{r\leq K}\mathrm{P@}r\cdot\mathrm{rel}_r/\min(K,|T_u|)$ & Evaluation 2; denominator$^{a}$ \\
+    ILD & mean of $d(i,j)=1-|G_i\cap G_j|/|G_i\cup G_j|$ over all film pairs of $L_u$ ($G_i$: genres) & Diversity; Jaccard on genres \\
+    Coverage & $|\bigcup_u L_u|/|I|$ (global) & Diversity; Fairness \\
+    Novelty & mean over $L_u$ of $-\log_2\bigl(c_i/\sum_j c_j\bigr)$, unseen films counted as $c_i{=}1$ & Diversity \\
+    Serendipity & $|\{i\in L_u\cap T_u:\ i\notin \mathrm{Pop}_u\}|/K$, $\mathrm{Pop}_u$: the $K$ most popular films outside $H_u$ & Diversity; formula \\
+    MC$_{KL}$ & $\sum_g p(g|u)\ln\frac{p(g|u)}{(1-\alpha)\,q(g|u)+\alpha\, p(g|u)}$, $\alpha{=}0.01$; $p$ from $H_u$, $q$ from $L_u$, a film's $m$ genres weighted $1/m$ & Calibration; uniform weights \\
+    AvgPop & mean over $L_u$ of $c_i/|U|$ (share of users who rated the film) & popularity bias \\
+    TailShare & share of $L_u$ in the tail group & groups (above) \\
+    UPD & $\mathrm{JSD}\bigl(P(H_u),P(L_u)\bigr)$, $P$: shares of head/mid/tail films, log base 2 & Fairness; $P$ and JSD \\
+    GRU & $\bigl|\overline{\mathrm{NDCG}}_{\text{inactive}}-\overline{\mathrm{NDCG}}_{\text{active}}\bigr|$, active: the 20\% of users with the largest $|H_u|$ & Fairness; groups \\
+    Gini & $\sum_j(2j-n-1)\,e_{(j)}/(n\sum_j e_j)$, $e_i$: number of lists containing film $i$, all $n{=}|I|$ films (global) & Fairness \\
+    \bottomrule
+  \end{tabular}\\[2pt]
+  {\footnotesize $^{a}$The lecture's AP divides by the ``number of relevant items'', but its worked example divides
+  by the number of hits; we use $\min(K,|T_u|)$, as RecBole does.}
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Validation on all 18 exported lists (9 models, validation and test split): largest absolute difference
+  between our value and RecBole's, either the value RecBole reported for the same checkpoint (rounded to 4 decimals)
+  or RecBole's metric code applied to our lists. Entropy is the normalised exposure entropy.}
+  \label{tab:metric-validation}
+  \small
+  \generatedtable{metric_validation}
+\end{table}
+
 \TODO{B, C, D: full per-group tables, extra metrics, alternative relevance rule.}
 
 \section{Additional results for Task 3}
