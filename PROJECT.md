@@ -116,6 +116,7 @@ python -m project.experiments.run_models --mode quick --models all   # 1. untune
 python -m project.experiments.tune_models                       # 2. grid search on validation NDCG@10
 python -m project.experiments.run_models --mode tuned           # 3. final (tuned) scores + lists
 python -m project.experiments.results_table                     # 4. report table + figure
+python -m project.experiments.evaluate_models                   # 5. our own metrics (Track B, see project/metrics/README.md)
 ```
 
 ### Evaluating separately (assignment: "perform the evaluation separately")
@@ -163,7 +164,7 @@ save_latex_table(df, "model_results")    # -> report/tables/generated/model_resu
 ```
 
 Agreed file names (the report already references them): `model_comparison`, `hybrid_coefficients`,
-`user_group_analysis` (figures) and `model_results`, `tuning_summary`, `reranker_results` (tables). Add new ones with a fixed,
+`user_group_analysis` (figures) and `model_results`, `tuning_summary`, `reranker_results`, `beyond_accuracy_results`, `metric_validation` (tables). Add new ones with a fixed,
 descriptive `snake_case` name — never put a date, run id or seed in the name; overwrite in place. Commit a generated
 file together with the code change that produced it. Generated tables contain only the `tabular`; the caption and
 label live in `report/report.tex`.
