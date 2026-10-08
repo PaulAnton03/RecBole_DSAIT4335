@@ -118,6 +118,7 @@ python -m project.experiments.run_models --mode tuned           # 3. final (tune
 python -m project.experiments.results_table                     # 4. report table + figure
 python -m project.experiments.evaluate_models                   # 5. our own metrics (Track B, see project/metrics/README.md)
 python -m project.experiments.group_analysis                    # 6. user and item groups (Track B, Task 2.5)
+python -m project.experiments.hybrid                            # 7. weighted hybrids (Track C, see project/hybrids/README.md)
 ```
 
 ### Evaluating separately (assignment: "perform the evaluation separately")

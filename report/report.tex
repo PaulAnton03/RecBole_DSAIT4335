@@ -28,7 +28,7 @@
 \usepackage[a4paper,margin=2.2cm]{geometry}
 \usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage{amsmath,amssymb}
+\usepackage{amsmath}                      % not amssymb: newtxmath already defines its symbols (\Bbbk clash)
 \usepackage{xcolor}
 \usepackage[font=small,skip=4pt]{caption}
 \usepackage{enumitem}
@@ -146,10 +146,53 @@ unregularised item--item solution overfits co-occurrence noise.
 \TODO{D: one sentence on the content-based model (Assignment 1 BERT model on the same split, exported as a score file).}
 
 \subsection{Weighted hybrid with learned coefficients (Task 1.3)}\owner{C}
-\TODO{C: regression model used to learn the coefficients; fitted on the validation candidates (union of each model's top-50); per-user score normalisation; the learned weights.}
+\label{sec:task1-weighted}
+The hybrid scores a pair as $\sum_k w_k\, z_k(u,i)$: $z_k$ is member $k$'s score rescaled per user
+(min--max over the user's unseen films, so that EASE weights, BPR dot products and kNN similarity sums can be
+added) and the $w_k$ are the coefficients of a ridge regression fitted on the \emph{validation} split only.
+The regression table has one row per candidate pair -- the union of the members' top-50 validation lists,
+77\,778 rows holding 5\,631 of the 9\,596 validation interactions -- the members' rescaled scores as features
+and 1 for a held-out interaction as target. Features and target are centred within user (a fixed-effects
+regression), so the weights explain \emph{which} of a user's candidates are relevant, not how many a user has;
+without this, members whose candidates are popular for everybody (Pop, FISM) absorb the between-user base
+rate. Members are the plan's shortlist, one per family: ItemKNN, EASE, BPR, NeuMF, LightGCN
+(code: \texttt{project/hybrids}, run \texttt{python -m project.experiments.hybrid}). Learned weight shares
+(Table~\ref{tab:hybrid-ablation}): EASE 0.57, LightGCN 0.29, BPR 0.14, NeuMF 0.04, ItemKNN $-0.03$ (its
+interval includes zero).
+
+\begin{table}[htbp]
+  \centering
+  \caption{The hybrids against their best member: validation NDCG@10 (``val.\ CV'': 5-fold cross-fitted over users,
+  the honest number; ``val.'': in-sample for the hybrids) and test metrics at $K{=}10$. WeightedHybridAll uses all
+  nine course models (tuned separately); GroupHybrid is the group-aware variant of Task~2.6.}
+  \label{tab:hybrid-results}
+  \footnotesize\setlength{\tabcolsep}{3.5pt}
+  \generatedtable{hybrid_results}
+\end{table}
+
+\emph{Discussion.} The hybrid improves on its best member, EASE, but only slightly: cross-validated validation
+NDCG@10 0.263 against 0.257 (paired 95\% interval of the difference $[+0.002, +0.011]$) and test 0.334 against
+0.330 ($[-0.001, +0.009]$, Wilcoxon $p{=}0.06$), so on test the gain is not significant
+(Table~\ref{tab:hybrid-results}; \texttt{hybrid\_significance.csv}). The weights follow the members' accuracy only
+partly. ItemKNN, whose scores correlate 0.71 with EASE's, gets no weight because EASE already carries its signal,
+whereas the weaker LightGCN keeps a large share because it is the most accurate embedding model and ranks the
+mid-popularity films EASE misses. The gain is small by construction: five members whose top-10 lists overlap by
+36--52\% leave a linear combination little to reorder and nothing to discover. Its clearer effect is beyond
+accuracy: coverage rises from 0.21 to 0.25 and popularity deviation falls from 0.19 to 0.18, because the embedding
+members pull mid-popularity films into the top 10 without displacing EASE's head hits.
 
 \subsection{Other hybrid models (Tasks 1.4 and 1.5)}\owner{D, C}
-\TODO{D: switching and mixed hybrids and why; C/D: how all hybrids were tuned on validation NDCG@10.}
+\TODO{D: switching and mixed hybrids and why, and how they were tuned on validation NDCG@10.}
+
+\paragraph{Tuning the weighted hybrid (Task 1.5).}
+Because the weights are learned on validation, settings are compared by 5-fold cross-fitting over users on that
+split: every user's list comes from weights that never saw the user's validation interactions. The grid is
+per-user rescaling (z-score, min--max, rank) $\times$ regression (ridge, non-negative least squares, logistic)
+$\times$ regularisation $\times$ candidate rows (union of the top-50 lists, or all unseen films), 30 settings
+(\texttt{results/processed/hybrid\_tuning.csv}). The rows and the rescaling matter, the regression hardly: all union settings score 0.256--0.263, and under z-score and min--max rescaling the three regressions differ by at most 0.001. Rank rescaling loses up to
+0.01 because it flattens the score gaps that mark a member's confident recommendations, and least squares on
+all unseen films (0.257) spends the fit on easy negatives that never reach a top 10, which logistic regression
+tolerates better (0.261). Selected: min--max, ridge $\lambda{=}0.1$, union rows (0.263; 0.263--0.264 over five random fold assignments); the in-sample validation value (0.264) is no higher, so five weights do not overfit.
 
 \clearpage
 % ===========================================================================
@@ -170,9 +213,9 @@ diversity (ILD, mean pairwise Jaccard distance between genre sets), catalogue co
 self-information $-\log_2$ of a film's share of interactions), serendipity (relevant films that a most-popular
 list would not have shown), genre miscalibration MC$_{KL}$ between history and list, average popularity and
 long-tail share; for fairness, the user-side GRU (largest NDCG gap between the low-, medium- and high-activity
-users of Task~2.5) and popularity deviation UPD, and the item-side Gini index of exposure. Validation: on all 22 lists our accuracy
-metrics equal the values RecBole reported to its 4-decimal rounding, and coverage, Gini, entropy and AvgPop equal
-RecBole's own metric code applied to our lists (Table~\ref{tab:metric-validation}); the metrics RecBole lacks are
+users of Task~2.5) and popularity deviation UPD, and the item-side Gini index of exposure. Validation: on the 22 model lists our accuracy
+metrics equal the values RecBole reported to its 4-decimal rounding, and on all 28 lists (models and hybrids) coverage,
+Gini, entropy and AvgPop equal RecBole's own metric code applied to our lists (Table~\ref{tab:metric-validation}); the metrics RecBole lacks are
 pinned down by hand-computed tests, including the lecture's worked examples.
 
 \begin{table}[htbp]
@@ -191,7 +234,7 @@ tuned embedding models (BPR, NeuMF, LightGCN) cover 32--37\% of the catalogue, r
 0.23) and follow each user's taste for popular or niche films best (UPD 0.14). The neighbourhood and
 item--item linear models cover only 17--23\% (AvgPop 0.24--0.27): they score a film by aggregating its
 co-occurrence with the user's films or neighbours, which favours films that co-occur with many others. EASE and
-SLIM are the best calibrated (MC$_{KL}$ 0.69 and 0.66; all others $\geq0.74$), as they reconstruct each user's
+SLIM are the best calibrated (MC$_{KL}$ 0.69 and 0.66; all other single models $\geq0.74$), as they reconstruct each user's
 history from item--item weights, so the recommended films resemble the user's own. Two properties of the metrics
 matter for Task~3: genre ILD barely varies (Random's 0.82 equals the mean distance of two random films, since
 65\% of film pairs share no genre), and GRU largely reflects the protocol: high-activity users hold 22 held-out films
@@ -223,7 +266,37 @@ embedding models need long training to reach a similar level on this little data
 thus inherit much of Pop's popularity bias, which Tasks~2.5 and~3 examine.
 
 \subsection{Hybrid coefficient analysis (Task 2.3)}\owner{C}
-\TODO{C: contribution of each individual recommender to the hybrid (coefficients, drop-one ablation).}
+\label{sec:task2-coefficients}
+Four views of a member's contribution (Table~\ref{tab:hybrid-ablation}, Figure~\ref{fig:hybrid-coefficients}):
+its weight share with a 95\% bootstrap interval over users; the change of NDCG@10 when it is removed and the
+hybrid refitted (on test, and cross-validated on validation); ``contrib.'', the member's mean share of the positive weighted terms $w_k(z_k-\bar z_{k,u})$ of a correct recommendation (each score taken relative to the member's mean for that user); and the member alone.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Contribution of each member to the weighted hybrid (test unless stated). $\Delta$NDCG: change of
+  NDCG@10 when the member is removed and the hybrid refitted; ``alone'': the member's own test NDCG@10.}
+  \label{tab:hybrid-ablation}
+  \small\setlength{\tabcolsep}{4pt}
+  \generatedtable{hybrid_ablation}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \generatedfigure[width=\linewidth]{hybrid_coefficients}
+  \caption{(a) Weight shares with bootstrap intervals; (b) change of test NDCG@10 when a member is removed;
+  (c) the weights refitted per user-taste group (Task~2.6).}
+  \label{fig:hybrid-coefficients}
+\end{figure}
+
+\emph{Discussion.} Weights and removals tell different stories, and the difference is the point. EASE is the only
+member the hybrid cannot do without: removing it costs 0.014 test NDCG@10 and leaves the other four at 0.320,
+below EASE alone (0.330). Removing any other member costs at most 0.002 although LightGCN holds 29\% of the weight,
+because BPR and NeuMF (score correlation with LightGCN 0.77 and 0.57) take over its role; the three embedding models
+are interchangeable, which is also why they split a joint share of about 0.47 instead of earning one each. Hit
+attribution shows the division of labour: of the hybrid's 2\,121 correct test recommendations, EASE singles out 79\%
+most strongly (63\% of them head films) and LightGCN 21\% (68\% mid-popularity films, and 13 of the 14 tail hits).
+Only 12 hits appear in no member's top 10 and 41\% appear in all five: the hybrid re-weights the members' agreement
+rather than finding new films, so the members it needs are the ones that disagree with EASE.
 
 \subsection{Further analyses (Task 2.4)}\owner{D}
 \TODO{D: overlap between the models' lists; what an oracle best-model-per-user would score.}
@@ -265,7 +338,33 @@ Figure~\ref{fig:popularity-alignment}), while BPR and LightGCN keep UPD at 0.13-
 \TODO{B: add the hybrids once C and D export their lists (re-run \texttt{group\_analysis} with \texttt{--figure-names}).}
 
 \subsection{Insights (Task 2.6)}\owner{C}
-\TODO{C: group-specific hybrid motivated by 2.5.}
+\label{sec:task2-insights}
+Task~2.5 found EASE's lead concentrated on high-activity users and the embedding models closer to niche users'
+taste, which suggests weights that depend on the user's group. The group-aware hybrid refits the same regression
+separately per group of one dimension (activity or taste; weights in \texttt{hybrid\_group\_weights.csv}) and is
+compared with the global hybrid per group with paired bootstraps (Table~\ref{tab:hybrid-groups}).
+
+\begin{table}[htbp]
+  \centering
+  \caption{Group-aware hybrid (weights fitted per taste group) against the global hybrid on test, per user group;
+  $\Delta$ is the mean per-user difference with a paired 95\% bootstrap interval.}
+  \label{tab:hybrid-groups}
+  \small\setlength{\tabcolsep}{3pt}
+  \generatedtable{hybrid_groups}
+\end{table}
+
+\emph{Discussion.} The per-group weights differ. For niche users EASE's share drops to 0.52 (mainstream and mixed
+0.61--0.64) in favour of LightGCN and NeuMF, which follow niche taste best (Task~2.5); for
+high-activity users it drops to 0.49 (low activity 0.65) in favour of ItemKNN and NeuMF, although EASE's own lead is
+largest there -- a weight measures what a member adds to the others, not its own accuracy. Yet the lists barely
+change: the taste version equals the global hybrid (test NDCG@10 $-0.000$ [$-0.002, +0.002$]), the activity version
+gains 0.001 ($+0.003$ [$0.000, 0.006$] for high-activity users only), and both match it in cross-validated
+validation NDCG (0.263). The members are strongly correlated, so a different mix reorders few films, and EASE
+remains the best single member in every group (Table~\ref{tab:user-groups}): Task~2.5's group differences reflect
+how many held-out films a group has, not a different best model. A superior hybrid needs a member that
+\emph{differs}, not more weights: the all-models hybrid reaches the best cross-validated validation NDCG (0.267) and
+the lowest popularity deviation of the hybrids (UPD 0.15, coverage 0.27) at equal test accuracy; Track~D's
+genre-based content model is the natural next member.
 
 \clearpage
 % ===========================================================================
@@ -318,6 +417,34 @@ extended. All numbers are single runs with seed 2020; a 3-seed variance check is
   \label{tab:tuning-summary}
   \small\setlength{\tabcolsep}{4pt}
   \generatedtable{tuning_summary}
+\end{table}
+
+\subsection{Weighted hybrid: settings and member overlap (Tasks 1.3, 1.5, 2.3)}
+\label{app:hybrid}
+Table~\ref{tab:hybrid-tuning} gives the best cross-validated validation NDCG@10 of every rescaling and
+regression for both candidate rules (over the regularisation values; every setting is in
+\texttt{results/processed/hybrid\_tuning.csv}). Table~\ref{tab:hybrid-overlap} shows how similar the members
+are: BPR, NeuMF and LightGCN correlate 0.53--0.77 with each other and ItemKNN 0.71 with EASE, which is why the
+leave-one-out drops of Table~\ref{tab:hybrid-ablation} are so much smaller than the weights suggest. Hits by
+number of members: 12 of the hybrid's 2\,121 correct test recommendations are in no member's top-10, 125 in
+exactly one and 864 in all five (\texttt{hybrid\_attribution\_counts.csv}).
+
+\begin{table}[htbp]
+  \centering
+  \caption{Cross-validated validation NDCG@10 of the weighted hybrid per rescaling and regression, for the two
+  candidate rules (union of the members' top-50 lists; all unseen films); best regularisation per cell.}
+  \label{tab:hybrid-tuning}
+  \small\setlength{\tabcolsep}{4pt}
+  \generatedtable{hybrid_tuning}
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Member similarity: correlation of the rescaled validation scores on the candidate rows (above the
+  diagonal) and mean Jaccard overlap of the members' top-10 lists (below).}
+  \label{tab:hybrid-overlap}
+  \small
+  \generatedtable{hybrid_overlap}
 \end{table}
 
 \subsection{Accuracy overview (Task 2.2)}
@@ -375,9 +502,9 @@ out of the mean and counted. None of these occurs for the exported lists.
 
 \begin{table}[htbp]
   \centering
-  \caption{Validation on all 22 exported lists (11 models, validation and test split): largest absolute difference
-  between our value and RecBole's, either the value RecBole reported for the same checkpoint (rounded to 4 decimals)
-  or RecBole's metric code applied to our lists. Entropy is the normalised exposure entropy.}
+  \caption{Validation on the exported lists (11 models and 3 hybrids, validation and test split): largest absolute
+  difference between our value and RecBole's, either the value RecBole reported for the same checkpoint (rounded to
+  4 decimals; model lists only) or RecBole's metric code applied to our lists. Entropy is the normalised exposure entropy.}
   \label{tab:metric-validation}
   \small
   \generatedtable{metric_validation}
