@@ -180,7 +180,9 @@ def scores_and_topk(model, dataset, eval_data, config, k: int = TOPK_CANDIDATES)
                 scores[row, hist] = -np.inf
         # torch.topk breaks ties differently for different k, so take the final list of
         # TOPK_FINAL exactly as RecBole does (same k), then the next k - TOPK_FINAL items.
-        m = scores.float().cpu().numpy()  # stored matrix (before the top-10 is blanked out)
+        # a COPY: for a float32 CPU tensor .float()/.cpu() return the same storage, and the scatter_
+        # below would otherwise blank the top-10 in the stored matrix as well
+        m = scores.float().cpu().numpy().copy()  # stored matrix (before the top-10 is blanked out)
         head_scores, head_items = torch.topk(scores, TOPK_FINAL, dim=1)
         scores.scatter_(1, head_items, -np.inf)
         tail_scores, tail_items = torch.topk(scores, k - TOPK_FINAL, dim=1)
