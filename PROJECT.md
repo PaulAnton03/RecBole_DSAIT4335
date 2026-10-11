@@ -119,6 +119,7 @@ python -m project.experiments.results_table                     # 4. report tabl
 python -m project.experiments.evaluate_models                   # 5. our own metrics (Track B, see project/metrics/README.md)
 python -m project.experiments.group_analysis                    # 6. user and item groups (Track B, Task 2.5)
 python -m project.experiments.hybrid                            # 7. weighted hybrids (Track C, see project/hybrids/README.md)
+python -m project.experiments.rerank_models                     # 8. re-rankers, λ sweep, test (Track E, see project/rerankers/README.md)
 ```
 
 ### Evaluating separately (assignment: "perform the evaluation separately")
