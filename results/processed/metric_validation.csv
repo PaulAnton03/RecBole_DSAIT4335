@@ -109,6 +109,18 @@ NGCF,valid,coverage@10,0.343639,0.343639,RecBole metric code
 NGCF,valid,gini@10,0.842501,0.842501,RecBole metric code
 NGCF,valid,entropy@10,0.788483,0.788483,RecBole metric code
 NGCF,valid,avgpop@10,0.16579,0.16579,RecBole metric code
+GroupHybrid,valid,coverage@10,0.231272,0.231272,RecBole metric code
+GroupHybrid,valid,gini@10,0.930643,0.930643,RecBole metric code
+GroupHybrid,valid,entropy@10,0.679798,0.679798,RecBole metric code
+GroupHybrid,valid,avgpop@10,0.265995,0.265995,RecBole metric code
+WeightedHybrid,valid,coverage@10,0.228894,0.228894,RecBole metric code
+WeightedHybrid,valid,gini@10,0.930767,0.930767,RecBole metric code
+WeightedHybrid,valid,entropy@10,0.679731,0.679731,RecBole metric code
+WeightedHybrid,valid,avgpop@10,0.265706,0.265706,RecBole metric code
+WeightedHybridAll,valid,coverage@10,0.255648,0.255648,RecBole metric code
+WeightedHybridAll,valid,gini@10,0.916585,0.916585,RecBole metric code
+WeightedHybridAll,valid,entropy@10,0.704327,0.704327,RecBole metric code
+WeightedHybridAll,valid,avgpop@10,0.251427,0.251427,RecBole metric code
 Random,test,ndcg@10,0.00782029,0.0078,RecBole run (4 decimals)
 Random,test,recall@10,0.00623016,0.0062,RecBole run (4 decimals)
 Random,test,precision@10,0.00742312,0.0074,RecBole run (4 decimals)
@@ -219,3 +231,15 @@ NGCF,test,coverage@10,0.347206,0.347206,RecBole metric code
 NGCF,test,gini@10,0.839832,0.839832,RecBole metric code
 NGCF,test,entropy@10,0.790665,0.790665,RecBole metric code
 NGCF,test,avgpop@10,0.163335,0.163335,RecBole metric code
+GroupHybrid,test,coverage@10,0.251486,0.251486,RecBole metric code
+GroupHybrid,test,gini@10,0.922558,0.922558,RecBole metric code
+GroupHybrid,test,entropy@10,0.694742,0.694742,RecBole metric code
+GroupHybrid,test,avgpop@10,0.256711,0.256711,RecBole metric code
+WeightedHybrid,test,coverage@10,0.253864,0.253864,RecBole metric code
+WeightedHybrid,test,gini@10,0.922307,0.922307,RecBole metric code
+WeightedHybrid,test,entropy@10,0.69523,0.69523,RecBole metric code
+WeightedHybrid,test,avgpop@10,0.256529,0.256529,RecBole metric code
+WeightedHybridAll,test,coverage@10,0.273484,0.273484,RecBole metric code
+WeightedHybridAll,test,gini@10,0.906888,0.906888,RecBole metric code
+WeightedHybridAll,test,entropy@10,0.719437,0.719437,RecBole metric code
+WeightedHybridAll,test,avgpop@10,0.241456,0.241456,RecBole metric code

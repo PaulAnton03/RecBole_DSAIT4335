@@ -1,0 +1,5 @@
+comparison,split,metric,users,mean_diff,ci_low,ci_high,users_better,users_worse,wilcoxon_p
+WeightedHybrid - EASE,valid (cross-fitted),ndcg@10,943,0.00659724,0.00206528,0.0108761,354,273,0.00121337
+WeightedHybrid - EASE,test,ndcg@10,943,0.0037407,-0.00101347,0.00863061,337,300,0.0581975
+WeightedHybridAll - EASE,test,ndcg@10,943,0.00243382,-0.00393546,0.008329,370,349,0.362006
+GroupHybrid - WeightedHybrid,test,ndcg@10,943,-7.35051e-05,-0.00184718,0.0016633,124,130,0.977537

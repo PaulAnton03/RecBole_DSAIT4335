@@ -11,7 +11,7 @@ python -m project.experiments.<name>
 | --- | --- |
 | `configs/` | our RecBole / experiment YAML configs: `base.yaml` (shared protocol), `tuning.yaml`, `hyper/` (search spaces), `models/` (tuned values) |
 | `models/` | **Track A**: individual models — train, tune, export scores and top-50 lists ([README](models/README.md)) |
-| `hybrids/` | hybrid recommenders (Task 1) |
+| `hybrids/` | **Track C**: the weighted hybrid with regression-learned coefficients, tuning, group-aware variant ([README](hybrids/README.md)) |
 | `metrics/` | **Track B**: our own accuracy and beyond-accuracy metrics, shared lookups (genres, popularity, groups) ([README](metrics/README.md)) |
 | `rerankers/` | diversity, calibration and fairness rerankers (Task 3) |
 | `analysis/` | coefficient, user-group and item-group analyses |

@@ -1,0 +1,6 @@
+member,attributed_hits,attributed_share,mean_contribution_share,attributed_head,attributed_mid,attributed_tail,attributed_unseen,hybrid_hits_in_own_top10,own_top10_hits
+ItemKNN,0,0,0,0,0,0,0,1479,1825
+EASE,1665,0.785007,0.41558,1048,616,1,0,1886,2082
+BPR,0,0,0.17487,0,0,0,0,1555,1868
+NeuMF,0,0,0.0531298,0,0,0,0,1477,1809
+LightGCN,456,0.214993,0.35642,133,310,13,0,1633,1932
