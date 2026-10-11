@@ -35,8 +35,8 @@ def rerank_then_combine(
     ----------
     models : list of model names
     split : "valid" or "test"
-    reranker_fn : callable(recs_df, lam, k_out, k_in) -> recs_df
-        Reranker function (e.g. mmr_rerank).
+    reranker_fn : callable(recs_df, k_out, k_in) -> recs_df
+        Reranker function (``project.rerankers.list_reranker(objective, lam, ctx)``).
     k_rerank : items to keep after reranking each model
     k_combine : final list length after combining
     k_candidates : candidate list length to load
@@ -80,7 +80,7 @@ def combine_then_rerank(
     combine_fn : callable(models, split, k) -> recs_df
         Combiner function (e.g. mixed_rrf).
     reranker_fn : callable(recs_df, k_out, k_in) -> recs_df
-        Reranker function (e.g. mmr_rerank).
+        Reranker function (``project.rerankers.list_reranker(objective, lam, ctx)``).
     k_combine : candidate list length from the combiner
     k_final : final list length after reranking
     """
@@ -110,7 +110,7 @@ def compare_orders(
 
     metrics = [
         "ndcg", "recall", "precision", "mrr", "map",
-        "ild", "coverage", "novelty", "miscalibration",
+        "ild", "coverage", "novelty", "miscalibration", "upd",
         "avgpop", "tailshare", "gini", "entropy",
     ]
     rows = []
