@@ -390,7 +390,34 @@ genre-based content model is the natural next member.
 \TODO{D: re-rank then combine versus combine then re-rank.}
 
 \subsection{Impact on user and item groups (Task 3.4)}\owner{B}
-\TODO{B: before/after re-ranking per group.}
+\label{sec:task3-groups}
+Each re-ranked list of Table~\ref{tab:reranker-results} (SLIM and LightGCN with the four re-rankers, at the $\lambda$
+chosen on validation) is compared with its base list on the same users, within the frozen groups of
+Section~\ref{sec:task2-groups}: paired per-user differences per group with 95\% bootstrap intervals, counted only
+when they hold on both validation and test (Figure~\ref{fig:reranker-groups}); item groups are in
+Table~\ref{tab:reranker-items}.
+
+\begin{figure}[htbp]
+  \centering
+  \generatedfigure[width=\linewidth]{reranker_group_impact}
+  \caption{Change after re-ranking per user group (test). (a) NDCG@10 change as a share of the base list's group
+  mean; (b) change of the re-ranker's own target metric (blue = improvement: ILD and TailShare up, MC$_{KL}$ and UPD
+  down; colour scaled per row). Grey: the paired 95\% interval includes 0 on validation or test.}
+  \label{fig:reranker-groups}
+\end{figure}
+
+\emph{Discussion.} Every re-ranker improves its target in every user group, but gains and costs are not shared
+equally. xQuAD, which promotes the long tail with the same weight for every user, gives most tail films to the
+users whose candidates contain them: niche users with LightGCN (TailShare $+0.13$ vs.\ $+0.05$ for mainstream
+users) and low-activity users with SLIM ($+0.11$ vs.\ $+0.03$), for SLIM at no measurable accuracy cost.
+PopCalibrated, which matches each user's own popularity mix, lowers UPD most for niche users (SLIM: $-0.087$ vs.\
+$-0.057$), the group Task~2.5 found worst served. Relative to their base accuracy, the groups lose similar shares
+of NDCG for most re-rankers (MMR: 4--9\%); the exception is Calibrated on SLIM, which costs low-activity users 32\%
+against 20\% for high-activity users. The activity gap (GRU) stays between 0.17 and 0.19; where it shrinks, high-activity
+users lost more. On the item side, xQuAD takes its long-tail slots from mid-popularity films rather than from the
+head (LightGCN: mid 51$\to$44\%, head 47$\to$45\% of slots) and more than doubles tail recall (0.021$\to$0.046): the
+extra exposure also retrieves relevant films. PopCalibrated cuts head exposure most (LightGCN 47$\to$35\%), at
+LightGCN's largest accuracy cost ($-12\%$).
 
 \clearpage
 % ===========================================================================
@@ -557,6 +584,16 @@ validation-split versions are the ones to use for design decisions (Task~2.6).
 \TODO{B, C, D: full per-group tables, extra metrics, alternative relevance rule.}
 
 \section{Additional results for Task 3}
+\begin{table}[htbp]
+  \centering
+  \caption{Item groups before and after re-ranking (test; Task~2.5 groups): share of all recommendation slots,
+  micro recall of each group's held-out films (support 1\,863 head, 5\,696 mid, 2\,016 tail pairs) and the share of
+  tail films recommended at least once. Per-group user results: \texttt{results/processed/reranker\_group\_changes\_test.csv}.}
+  \label{tab:reranker-items}
+  \small\setlength{\tabcolsep}{4pt}
+  \generatedtable{reranker_item_groups}
+\end{table}
+
 \TODO{E: extra $\lambda$ values, per-group tables after re-ranking.}
 
 \end{document}

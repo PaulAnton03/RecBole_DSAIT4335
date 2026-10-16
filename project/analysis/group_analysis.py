@@ -15,7 +15,7 @@ reported next to the group means and sizes.
 """
 from __future__ import annotations
 
-from typing import Dict, Sequence
+from typing import Dict, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -105,9 +105,11 @@ def intersection(per_user: pd.DataFrame, name: str, k: int = TOPK_FINAL) -> pd.D
 
 
 def paired_differences(per_user: pd.DataFrame, names: Sequence[str], k: int = TOPK_FINAL,
-                       metrics: Sequence[str] = ("ndcg", "recall"), n_boot: int = N_BOOT) -> pd.DataFrame:
+                       metrics: Sequence[str] = ("ndcg", "recall"), n_boot: int = N_BOOT,
+                       pairs: Optional[Sequence[Tuple[str, str]]] = None) -> pd.DataFrame:
     """Within-group comparison of two lists on the same users: mean per-user difference A - B with a
-    paired 95 % bootstrap interval, for every pair of ``names``, every group and all users.
+    paired 95 % bootstrap interval, for every pair of ``names`` (or only the given ``pairs``), every group
+    and all users.
 
     ``per_user`` is the long per-user table of ``analyse`` (columns name, user_id, activity, taste, metrics).
     Comparing models inside a group avoids the held-out-set-size confound of raw group gaps.
@@ -117,14 +119,14 @@ def paired_differences(per_user: pd.DataFrame, names: Sequence[str], k: int = TO
     cells = [("all", "all", np.ones(len(groups), dtype=bool))] + [
         (dim, g, (groups[dim] == g).to_numpy()) for dim, gs in DIMENSIONS.items() for g in gs]
     rows = []
-    for i, a in enumerate(names):
-        for b in names[i + 1:]:
-            for m in metrics:
-                d = (wide[m][a] - wide[m][b]).reindex(groups.index).to_numpy()
-                for dim, g, mask in cells:
-                    lo, hi = bootstrap_ci(d[mask], n_boot)
-                    rows.append({"a": a, "b": b, "metric": f"{m}@{k}", "dimension": dim, "group": g,
-                                 "users": int(mask.sum()), "diff": np.nanmean(d[mask]), "ci_low": lo, "ci_high": hi})
+    pairs = pairs if pairs is not None else [(a, b) for i, a in enumerate(names) for b in names[i + 1:]]
+    for a, b in pairs:
+        for m in metrics:
+            d = (wide[m][a] - wide[m][b]).reindex(groups.index).to_numpy()
+            for dim, g, mask in cells:
+                lo, hi = bootstrap_ci(d[mask], n_boot)
+                rows.append({"a": a, "b": b, "metric": f"{m}@{k}", "dimension": dim, "group": g,
+                             "users": int(mask.sum()), "diff": np.nanmean(d[mask]), "ci_low": lo, "ci_high": hi})
     return pd.DataFrame(rows)
 
 
