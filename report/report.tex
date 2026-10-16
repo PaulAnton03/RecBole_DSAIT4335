@@ -322,20 +322,20 @@ their held-out pairs and their share of recommendation slots (Tables~\ref{tab:us
 \end{figure}
 
 \emph{Discussion.} Raw group gaps mostly reflect the protocol: high-activity users hold 22 held-out films against
-2.5 for low-activity ones, so NDCG@10 is highest and (except for Random) Recall@10 lowest for high-activity users
-(Figure~\ref{fig:user-groups}a,b); niche users (18 held-out films) and mainstream users (4) show the same reversal.
-We therefore compare models within groups and keep only differences that hold on both validation and test.
-EASE's lead over the embedding models is clear for high-activity users (paired NDCG $+0.03$ to $+0.05$ over
-LightGCN and BPR on both splits) but vanishes for low-activity users on validation: with few interactions no model
-is reliably better, so switching models by activity has little to exploit (Task~2.6). On the item side, the 58
-head films take 47--62\% of the tuned models' slots, while tail films, 21\% of the held-out pairs, are almost
-never retrieved (recall $\leq0.021$). The embedding models expose and retrieve about ten times more tail films
-than EASE, whereas Random fills 70\% of its slots with tail films and still retrieves fewer: exposure alone is not
-success. Niche users are served worst in their taste: EASE and UserKNN give them 50--57\% head films against
-15\% in their profiles (UPD 0.22--0.26 vs.\ 0.14--0.15 for mainstream users;
-Figure~\ref{fig:popularity-alignment}), while BPR and LightGCN keep UPD at 0.13--0.15 in every taste group.
-
-\TODO{B: add the hybrids once C and D export their lists (re-run \texttt{group\_analysis} with \texttt{--figure-names}).}
+2.5 for low-activity ones, so NDCG@10 is highest and (except for Random) Recall@10 lowest for them
+(Figure~\ref{fig:user-groups}a,b); niche (18 held-out films) and mainstream users (4) show the same reversal. We
+therefore compare models within groups, keeping differences that hold on both validation and test. EASE's lead
+over the embedding models is clear for high-activity users (paired NDCG $+0.03$ to $+0.05$ over LightGCN and BPR)
+but vanishes for low-activity users on validation, so switching models by activity has little to exploit
+(Task~2.6). The weighted hybrids, judged on test only (their validation lists are in-sample), are not significantly
+better than EASE overall ($+0.004$): WeightedHybrid and GroupHybrid gain only for niche users ($+0.010$, interval
+above zero), the group already served best, and nothing for low-activity and mainstream users ($\pm0.001$). On the
+item side, the 58 head films take 47--62\% of the tuned models' slots, while tail films, 21\% of the held-out pairs,
+are almost never retrieved (recall $\leq0.021$); the embedding models retrieve about ten times more of them than
+EASE, and Random, with 70\% tail slots, retrieves fewer: exposure alone is not success. Niche users are served worst
+in their taste: EASE and UserKNN give them 50--57\% head films against 15\% in their profiles (UPD 0.22--0.26 vs.\
+0.14--0.15 for mainstream users; Figure~\ref{fig:popularity-alignment}); the hybrids, mixing in the embedding
+models, lower this to 0.19--0.20, while BPR and LightGCN keep UPD at 0.13--0.15 in every taste group.
 
 \subsection{Insights (Task 2.6)}\owner{C}
 \label{sec:task2-insights}

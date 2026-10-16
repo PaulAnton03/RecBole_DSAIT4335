@@ -175,7 +175,8 @@ def item_table(item: pd.DataFrame, names, k: int) -> pd.DataFrame:
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--split", choices=EVAL_SPLITS + ("both",), default="both")
-    parser.add_argument("--names", default=None, help="comma-separated list names (default: every exported list)")
+    parser.add_argument("--names", default=None,
+                        help="comma-separated list names (default: every exported model and hybrid, no re-ranked lists)")
     parser.add_argument("--figure-names", default=None,
                         help="lists in the figures (default: the shortlist of models plus every non-model list)")
     parser.add_argument("--k", type=int, default=TOPK_FINAL)
@@ -186,7 +187,8 @@ def main():
     results = {}
     for split in splits:
         ctx = EvaluationContext.for_split(split)
-        names = args.names.split(",") if args.names else available_names(split)
+        # re-ranked lists ("<Model>+<Objective>") belong to Task 3.4 (reranker_group_analysis), not to 2.5
+        names = args.names.split(",") if args.names else [n for n in available_names(split) if "+" not in n]
         out = analyse({n: load_recommendations(n, split) for n in names}, ctx, args.k, args.n_boot)
         for key, file in (("user", "user_group_metrics"), ("gaps", "user_group_gaps"), ("item", "item_group_metrics"),
                           ("alignment", "popularity_alignment"), ("intersection", "user_group_intersection"),
