@@ -174,8 +174,10 @@ project/tests/test_metrics.py, test_group_analysis.py   hand-computed tests
 
 ## 7. User and item groups (Task 2.5)
 
-`python -m project.experiments.group_analysis` analyses every exported list (models, and hybrids or re-ranked
-lists as soon as they are exported; `--names` restricts, `--figure-names` picks the lists in the figures).
+`python -m project.experiments.group_analysis` analyses every exported model and hybrid (re-ranked lists,
+`<Model>+<Objective>`, are left to §8; `--names` restricts, `--figure-names` picks the lists in the figures).
+The hybrids' validation lists are in-sample (Track C fits their weights on validation), so compare hybrids on
+`test` only.
 
 **Groups** (frozen, training split only, `results/processed/group_definitions.json`):
 
