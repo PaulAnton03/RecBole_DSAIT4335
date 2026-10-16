@@ -129,7 +129,7 @@ The lecturer's scripts dump the split and the top-k lists so metrics can be comp
 ```bash
 # 1. train (prints the checkpoint path: saved/ml-100k-BPR-<timestamp>.pth)
 python run_recbole.py --model=BPR --dataset=ml-100k --config_files=recbole/config/BPR/ml-100k.yaml
-# 2. ground-truth split  (use OUR seeded wrapper, see warning below)
+# 2. ground-truth split  (our seeded wrapper; the lecturer's fixed save_split.py now gives the same split)
 python -m project.experiments.save_split_seeded --model BPR --dataset ml-100k \
     --config_files recbole/config/BPR/ml-100k.yaml --output_dir results/raw/splits
 # 3. top-k lists for every test user
@@ -139,11 +139,11 @@ python score_from_saved.py --test_tsv results/raw/splits/ml-100k.test.tsv \
     --rec_json results/raw/recommendations/ml-100k_BPR_top10.json --k 10
 ```
 
-> **Warning — the lecturer's `save_split.py` is not seeded.** It builds the split without `init_seed`, so its
-> "test" split differs from the one the model was trained/reloaded on. Scoring against it gave Recall@10 = 0.017
-> where RecBole itself reported 0.2085 for the same checkpoint (only 875 of 9,596 test pairs overlapped). With
-> `project.experiments.save_split_seeded` the split is identical (9,596/9,596) and `score_from_saved.py` reproduces
-> RecBole's numbers exactly. Also: the comments in the lecturer's configs mention `configs/<Model>/ml-100k.yaml`;
+> **Fixed upstream (October 2026) — the lecturer's `save_split.py` was not seeded.** It built the split without
+> `init_seed`, so its "test" split differed from the one the model was trained/reloaded on (Recall@10 = 0.017 instead
+> of RecBole's 0.2085; only 875 of 9,596 test pairs overlapped). The course repository now seeds it; run with the
+> config files a model was trained with, it reproduces our frozen split exactly for all 11 models, as does
+> `project.experiments.save_split_seeded`. Also: the comments in the lecturer's configs mention `configs/<Model>/ml-100k.yaml`;
 > the real path is `recbole/config/<Model>/ml-100k.yaml`.
 
 ## 5. Results, figures and tables
