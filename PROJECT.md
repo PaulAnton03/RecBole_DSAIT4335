@@ -118,6 +118,7 @@ python -m project.experiments.run_models --mode tuned           # 3. final (tune
 python -m project.experiments.results_table                     # 4. report table + figure
 python -m project.experiments.evaluate_models                   # 5. our own metrics (Track B, see project/metrics/README.md)
 python -m project.experiments.group_analysis                    # 6. user and item groups (Track B, Task 2.5)
+python -m project.experiments.reranker_group_analysis           # 7. re-rankers by group (Track B, Task 3.4)
 python -m project.experiments.hybrid                            # 7. weighted hybrids (Track C, see project/hybrids/README.md)
 python -m project.experiments.rerank_models                     # 8. re-rankers, λ sweep, test (Track E, see project/rerankers/README.md)
 ```
@@ -167,7 +168,7 @@ save_latex_table(df, "model_results")    # -> report/tables/generated/model_resu
 ```
 
 Agreed file names (the report already references them): `model_comparison`, `hybrid_coefficients`,
-`user_group_analysis`, `popularity_alignment` (figures) and `model_results`, `tuning_summary`, `reranker_results`, `beyond_accuracy_results`, `metric_validation`, `group_definitions`, `user_group_results`, `item_group_results` (tables). Add new ones with a fixed,
+`user_group_analysis`, `popularity_alignment`, `reranker_group_impact` (figures) and `model_results`, `tuning_summary`, `reranker_results`, `beyond_accuracy_results`, `metric_validation`, `group_definitions`, `user_group_results`, `item_group_results`, `reranker_item_groups` (tables). Add new ones with a fixed,
 descriptive `snake_case` name — never put a date, run id or seed in the name; overwrite in place. Commit a generated
 file together with the code change that produced it. Generated tables contain only the `tabular`; the caption and
 label live in `report/report.tex`.

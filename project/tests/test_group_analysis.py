@@ -80,3 +80,18 @@ def test_popularity_alignment_shares_sum_to_one():
     filled = out[out.users > 0]
     np.testing.assert_allclose(filled[list(lookups.POPULARITY_GROUPS)].sum(axis=1), 1.0)
     assert out[out.users == 0][list(lookups.POPULARITY_GROUPS)].isna().all().all()  # empty group: undefined
+
+
+def test_paired_differences_only_given_pairs():
+    pu = _per_user()
+    pairs = ga.paired_differences(pu, ["A", "B"], k=10, n_boot=50, pairs=[("B", "A")])
+    assert set(zip(pairs.a, pairs.b)) == {("B", "A")}
+    assert pairs[pairs.group == "all"]["diff"].iloc[0] == pytest.approx(-0.3)
+
+
+def test_robust_needs_the_same_sign_on_both_splits():
+    from project.experiments.reranker_group_analysis import mark_robust
+    key = {"a": ["X"] * 3, "metric": ["ndcg@10"] * 3, "dimension": ["all"] * 3, "group": ["g1", "g2", "g3"]}
+    test = pd.DataFrame({**key, "ci_low": [0.1, 0.1, -0.2], "ci_high": [0.2, 0.2, 0.1]})
+    valid = pd.DataFrame({**key, "ci_low": [0.05, -0.3, 0.1], "ci_high": [0.3, -0.1, 0.2]})
+    assert mark_robust(test, valid)["robust"].tolist() == [True, False, False]

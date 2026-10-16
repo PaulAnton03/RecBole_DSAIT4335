@@ -212,3 +212,19 @@ a group (`user_group_pairs`) or against the baselines in the same group. Item-gr
 keeps the original ranks (no list is filtered to one group). Small groups (unseen: 21 held-out test pairs) are
 unstable; always read the support. Trust a difference between models only if it holds on both splits: on test,
 LightGCN beat UserKNN by 0.040 NDCG for high-activity users, but on validation the two are tied in every group.
+
+## 8. Re-rankers by group (Task 3.4)
+
+`python -m project.experiments.reranker_group_analysis` (≈ 20 s) compares every re-ranked list Track E reports
+(`results/processed/reranker_results.csv`: base, objective, λ chosen on validation) with its base list, on the
+Task 2.5 groups. A re-ranked list missing from `results/raw/recommendations` (git-ignored) is regenerated with
+Track E's `rerank` at that λ; nothing is re-tuned.
+
+| File | Content |
+| --- | --- |
+| `reranker_group_changes_<split>.csv` | re-ranked − base per user group (and all users): paired mean difference with 95 % bootstrap CI, base mean, relative change, for NDCG@10, Recall@10 and the objective's target metric; test file: `robust` = CI excludes 0 with the same sign on valid and test |
+| `reranker_item_groups_<split>.csv` | item-group table (slot share, recall, coverage, …) of every base and re-ranked list |
+| `figures/generated/reranker_group_impact.pdf`, `report/tables/generated/reranker_item_groups.tex` | report assets (test) |
+
+Relative NDCG changes divide by the base list's group mean, so groups with more held-out items (and higher NDCG)
+do not look as if they lose more just because they start higher.
