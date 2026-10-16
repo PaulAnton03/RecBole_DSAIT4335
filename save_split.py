@@ -7,6 +7,11 @@ using the ORIGINAL (external) user/item tokens -- not RecBole's internal
 integer ids -- so the files can be read by pandas/Excel or by any other
 tool outside RecBole.
 
+The random number generators are seeded with the config's `seed` before
+splitting, exactly like run_recbole.py does, so the exported split is the
+one the model was trained on -- as long as you pass the same config file(s)
+you trained with.
+
 Usage:
     python save_split.py --model BPR --dataset ml-100k \
         --config_files recbole/config/BPR/ml-100k.yaml \
@@ -19,6 +24,7 @@ import pandas as pd
 
 from recbole.config import Config
 from recbole.data import create_dataset, data_preparation
+from recbole.utils import init_seed
 
 
 def dump_interactions(data_loader, dataset, out_path):
@@ -58,6 +64,8 @@ def main():
         dataset=args.dataset,
         config_file_list=config_file_list,
     )
+    # same seeding as run_recbole(): without it, order: RO shuffles differently on every run
+    init_seed(config["seed"], config["reproducibility"])
 
     dataset = create_dataset(config)
     train_data, valid_data, test_data = data_preparation(config, dataset)
